@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Plus, Search, FileSpreadsheet } from 'lucide-react';
+import { Plus, Search, FileSpreadsheet, UploadCloud, CheckCircle2 } from 'lucide-react';
 import {
   getFarmCages,
   calculateCageSummary,
@@ -13,7 +13,7 @@ import {
   FarmBranch
 } from '@/lib/data/farm-data';
 import { ProduksiSummaryCard, ProduksiCageItem } from '@/components/produksi';
-import { LphExportModal } from '@/components/laporan';
+import { LphExportModal, LphImportModal } from '@/components/laporan';
 
 export default function ProduksiOverviewPage() {
   const [branches, setBranches] = useState<FarmBranch[]>([]);
@@ -21,6 +21,8 @@ export default function ProduksiOverviewPage() {
   const [cages, setCages] = useState<FarmCageData[]>([]);
   const [search, setSearch] = useState('');
   const [showExportModal, setShowExportModal] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   const loadData = () => {
     const brs = getFarmBranches();
@@ -44,6 +46,12 @@ export default function ProduksiOverviewPage() {
     setActiveBranch(id);
     setActiveBranchId(id);
     setCages(getFarmCages(id));
+  };
+
+  const handleImportSuccess = (importedCount: number) => {
+    loadData();
+    setToastMessage(`Berhasil memperbarui ${importedCount} unit kandang dari Excel!`);
+    setTimeout(() => setToastMessage(null), 3500);
   };
 
   const summary = calculateCageSummary(cages);
@@ -114,7 +122,7 @@ export default function ProduksiOverviewPage() {
         targetAct={summary.avgStd}
       />
 
-      {/* Search & Export Action */}
+      {/* Search & Action Buttons */}
       <div className="flex items-center gap-2">
         <div className="relative flex-1">
           <Search className="absolute left-3.5 w-4 h-4 text-slate-400 pointer-events-none" />
@@ -128,9 +136,18 @@ export default function ProduksiOverviewPage() {
         </div>
 
         <button
+          onClick={() => setShowImportModal(true)}
+          className="h-11 px-3 rounded-xl bg-sky-50 hover:bg-sky-100 border border-sky-200 text-[#0284c7] font-bold text-xs flex items-center gap-1.5 shrink-0 transition-colors"
+          title="Import Excel LPH"
+        >
+          <UploadCloud className="w-4 h-4" />
+          <span className="hidden sm:inline">Import</span>
+        </button>
+
+        <button
           onClick={() => setShowExportModal(true)}
-          className="h-11 px-3.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-800 font-bold text-xs flex items-center gap-1.5 shrink-0 transition-colors"
-          title="Export Excel"
+          className="h-11 px-3 rounded-xl bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-800 font-bold text-xs flex items-center gap-1.5 shrink-0 transition-colors"
+          title="Export Excel LPH"
         >
           <FileSpreadsheet className="w-4 h-4" />
           <span className="hidden sm:inline">Export</span>
@@ -159,6 +176,28 @@ export default function ProduksiOverviewPage() {
         totalCages={cages.length}
         totalProduksi={summary.totalProduksi}
       />
+
+      {/* Modular Import Modal */}
+      <LphImportModal
+        isOpen={showImportModal}
+        onClose={() => setShowImportModal(false)}
+        onSuccess={handleImportSuccess}
+      />
+
+      {/* Toast Notification */}
+      <div
+        className={`fixed bottom-24 left-4 right-4 z-50 bg-slate-900 text-white p-3.5 rounded-2xl shadow-xl flex items-center gap-3 transition-all duration-300 ${
+          toastMessage ? 'translate-y-0 opacity-100' : 'translate-y-20 opacity-0 pointer-events-none'
+        }`}
+      >
+        <div className="w-7 h-7 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
+          <CheckCircle2 className="w-4 h-4" />
+        </div>
+        <div>
+          <p className="font-bold text-xs sm:text-sm">Produksi Berhasil Diperbarui!</p>
+          <p className="text-[11px] text-slate-300">{toastMessage}</p>
+        </div>
+      </div>
     </div>
   );
 }

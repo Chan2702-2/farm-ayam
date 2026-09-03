@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { FileSpreadsheet, Download } from 'lucide-react';
+import { FileSpreadsheet, Download, UploadCloud, CheckCircle2 } from 'lucide-react';
 import {
   getFarmCages,
   calculateCageSummary,
@@ -15,6 +15,7 @@ import {
   LphTable,
   LaporanKpiStrip,
   LphExportModal,
+  LphImportModal,
   LaporanFilterBar
 } from '@/components/laporan';
 
@@ -24,6 +25,8 @@ export default function LaporanPage() {
   const [cages, setCages] = useState<FarmCageData[]>([]);
   const [selectedDate, setSelectedDate] = useState('2026-09-03');
   const [showExportModal, setShowExportModal] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   const loadData = () => {
     const brs = getFarmBranches();
@@ -49,6 +52,12 @@ export default function LaporanPage() {
     setCages(getFarmCages(id));
   };
 
+  const handleImportSuccess = (importedCount: number) => {
+    loadData();
+    setToastMessage(`Berhasil mengimpor ${importedCount} unit kandang dari Excel!`);
+    setTimeout(() => setToastMessage(null), 3500);
+  };
+
   const summary = calculateCageSummary(cages);
   const currentBranchObj = branches.find((b) => b.id === activeBranch);
 
@@ -65,13 +74,25 @@ export default function LaporanPage() {
           </h1>
         </div>
 
-        <button
-          onClick={() => setShowExportModal(true)}
-          className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-xs active:scale-95 transition-all"
-        >
-          <FileSpreadsheet className="w-4 h-4" />
-          <span>Export Excel</span>
-        </button>
+        <div className="flex items-center gap-1.5">
+          <button
+            onClick={() => setShowImportModal(true)}
+            className="flex items-center gap-1 px-2.5 sm:px-3 py-2 rounded-xl bg-sky-50 hover:bg-sky-100 text-[#0284c7] text-xs font-bold border border-sky-200/80 active:scale-95 transition-all"
+            title="Import File Excel LPH"
+          >
+            <UploadCloud className="w-4 h-4" />
+            <span>Import</span>
+          </button>
+
+          <button
+            onClick={() => setShowExportModal(true)}
+            className="flex items-center gap-1 px-2.5 sm:px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-xs active:scale-95 transition-all"
+            title="Export File Excel LPH"
+          >
+            <FileSpreadsheet className="w-4 h-4" />
+            <span>Export</span>
+          </button>
+        </div>
       </div>
 
       {/* Modular Filter Bar (Branch Tabs & Date Ribbon) */}
@@ -96,7 +117,7 @@ export default function LaporanPage() {
         avgWeight={summary.avgWeight}
       />
 
-      {/* LPH Table Card Preview (Layout Identik Excel 3 Alur) */}
+      {/* LPH Table Card Preview */}
       <div className="bg-white rounded-2xl p-3.5 sm:p-4 border border-slate-100 shadow-xs space-y-3">
         <div className="flex items-center justify-between">
           <div>
@@ -132,6 +153,28 @@ export default function LaporanPage() {
         totalProduksi={summary.totalProduksi}
         initialDate={selectedDate}
       />
+
+      {/* Modular Import Modal */}
+      <LphImportModal
+        isOpen={showImportModal}
+        onClose={() => setShowImportModal(false)}
+        onSuccess={handleImportSuccess}
+      />
+
+      {/* Toast Notification */}
+      <div
+        className={`fixed bottom-24 left-4 right-4 z-50 bg-slate-900 text-white p-3.5 rounded-2xl shadow-xl flex items-center gap-3 transition-all duration-300 ${
+          toastMessage ? 'translate-y-0 opacity-100' : 'translate-y-20 opacity-0 pointer-events-none'
+        }`}
+      >
+        <div className="w-7 h-7 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
+          <CheckCircle2 className="w-4 h-4" />
+        </div>
+        <div>
+          <p className="font-bold text-xs sm:text-sm">Sinkronisasi Berhasil!</p>
+          <p className="text-[11px] text-slate-300">{toastMessage}</p>
+        </div>
+      </div>
     </div>
   );
 }
