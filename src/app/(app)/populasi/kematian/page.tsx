@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import {
   HeartCrack,
   Save,
@@ -18,8 +18,6 @@ import { Modal } from '@/components/ui/Modal';
 
 export default function CatatKematianPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const cageParam = searchParams.get('cage') || 'cage-1';
 
   const [cages, setCages] = useState<FarmCageData[]>([]);
   const [selectedCage, setSelectedCage] = useState<FarmCageData | null>(null);
@@ -36,14 +34,20 @@ export default function CatatKematianPage() {
   useEffect(() => {
     const list = getFarmCages();
     setCages(list);
-    const initial = getCageById(cageParam) || list[0];
+    let cageId = 'cage-1';
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const paramCage = params.get('cage');
+      if (paramCage) cageId = paramCage;
+    }
+    const initial = getCageById(cageId) || list[0];
     if (initial) {
       setSelectedCage(initial);
       setMati(initial.mati || 2);
       setAfkir(initial.afkir || 0);
       setMutasi(initial.mutasiKeluar || 0);
     }
-  }, [cageParam]);
+  }, []);
 
   const initialPop = selectedCage?.populasiAwal || 4104;
   const currentPop = selectedCage?.populasiHidup || 4065;

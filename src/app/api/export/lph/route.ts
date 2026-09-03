@@ -4,6 +4,8 @@ import path from 'path';
 import fs from 'fs';
 import { initialFarmCages } from '@/lib/data/farm-data';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -22,35 +24,32 @@ export async function GET(request: NextRequest) {
     const yearNum = dateObj.getFullYear();
     const dateTitle = `${dayStr}, ${dateNum} ${monthStr} ${yearNum} (3 ALUR)`;
 
-    // Locate the authentic template in docs folder
-    const templateCandidates = [
-      path.resolve(process.cwd(), '..', 'docs', 'LPH 3 ALUR 3-9-26.xlsx'),
-      path.resolve('d:', 'Project Website', 'ctt-farm', 'docs', 'LPH 3 ALUR 3-9-26.xlsx'),
-      path.resolve(process.cwd(), 'docs', 'LPH 3 ALUR 3-9-26.xlsx')
-    ];
+    // Statically scoped to project docs folder
+    const templatePath = path.join(process.cwd(), 'docs', 'LPH 3 ALUR 3-9-26.xlsx');
 
-    let templatePath = '';
-    for (const p of templateCandidates) {
-      if (fs.existsSync(p)) {
-        templatePath = p;
-        break;
+    let hasTemplate = false;
+    try {
+      if (fs.existsSync(/*turbopackIgnore: true*/ templatePath)) {
+        hasTemplate = true;
       }
+    } catch {
+      hasTemplate = false;
     }
 
     const workbook = new ExcelJS.Workbook();
 
-    if (templatePath) {
+    if (hasTemplate) {
       await workbook.xlsx.readFile(templatePath);
       const worksheet = workbook.worksheets[0];
-      
+
       // Update Title Date
       worksheet.getCell('A3').value = `HARI/TANGGAL : ${dateTitle}`;
-      
+
       // Update sheet name
       const sheetDateName = `${dateNum}-${dateObj.getMonth() + 1}`;
       worksheet.name = sheetDateName;
     } else {
-      // Fallback matching template structure
+      // Programmatic fallback matching authentic template structure
       const worksheet = workbook.addWorksheet('LPH');
       worksheet.addRow(['LAPORAN HARIAN PRODUKSI TELUR']);
       worksheet.addRow(['YUKI FARM']);
