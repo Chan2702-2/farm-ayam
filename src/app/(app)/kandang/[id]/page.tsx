@@ -8,9 +8,6 @@ import {
   Egg,
   HeartCrack,
   Scale,
-  Thermometer,
-  Droplets,
-  Wind,
   TrendingUp,
   AlertTriangle,
   CheckCircle2,
@@ -201,37 +198,7 @@ export default async function KandangDetailPage({
         </div>
       </div>
 
-      {/* IoT Environmental Sensors */}
-      <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 space-y-2.5">
-        <div className="flex items-center justify-between">
-          <h3 className="font-jakarta font-bold text-sm text-slate-900">
-            Telemetri Sensor Kandang
-          </h3>
-          <span className="text-[10px] text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full font-bold">
-            IoT Online
-          </span>
-        </div>
 
-        <div className="grid grid-cols-3 gap-2 text-center text-xs">
-          <div className="p-2.5 bg-slate-50 rounded-xl">
-            <Thermometer className="w-4 h-4 text-[#0284c7] mx-auto mb-1" />
-            <span className="text-slate-400 text-[10px] block">Suhu Udara</span>
-            <strong className="text-slate-800 text-sm font-jakarta">28.8°C</strong>
-          </div>
-
-          <div className="p-2.5 bg-slate-50 rounded-xl">
-            <Droplets className="w-4 h-4 text-sky-500 mx-auto mb-1" />
-            <span className="text-slate-400 text-[10px] block">Kelembaban</span>
-            <strong className="text-slate-800 text-sm font-jakarta">68% RH</strong>
-          </div>
-
-          <div className="p-2.5 bg-slate-50 rounded-xl">
-            <Wind className="w-4 h-4 text-slate-500 mx-auto mb-1" />
-            <span className="text-slate-400 text-[10px] block">Kecepatan Angin</span>
-            <strong className="text-slate-800 text-sm font-jakarta">2.4 m/s</strong>
-          </div>
-        </div>
-      </div>
 
       {/* Quick Action Buttons for Cage */}
       <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 space-y-2.5">
