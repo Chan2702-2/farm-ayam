@@ -12,6 +12,7 @@ import {
   FarmBranch
 } from '@/lib/data/farm-data';
 import { KandangCard } from '@/components/kandang/KandangCard';
+import { getCurrentUser, filterCagesForUser, AuthUser } from '@/lib/data/auth-users';
 import { Modal } from '@/components/ui/Modal';
 
 export default function KandangPage() {
@@ -32,22 +33,32 @@ export default function KandangPage() {
   const [newUmurMgg, setNewUmurMgg] = useState('31');
   const [newJenis, setNewJenis] = useState('LAYER LOHMANN');
 
+  const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
+
   const loadData = () => {
+    const user = getCurrentUser();
+    setCurrentUser(user);
     const brs = getFarmBranches();
     setBranches(brs);
-    const active = getActiveBranchId();
+    const active = user && user.role === 'PENGAWAS' ? user.branchId : getActiveBranchId();
     setActiveBranch(active);
-    setCages(getFarmCages(active));
+    const branchCages = getFarmCages(active);
+    setCages(filterCagesForUser(branchCages, user));
   };
 
   useEffect(() => {
     loadData();
 
-    const handleBranchChange = () => {
-      loadData();
-    };
+    const handleBranchChange = () => loadData();
+    const handleAuthChange = () => loadData();
+
     window.addEventListener('branchChange', handleBranchChange);
-    return () => window.removeEventListener('branchChange', handleBranchChange);
+    window.addEventListener('authChange', handleAuthChange);
+
+    return () => {
+      window.removeEventListener('branchChange', handleBranchChange);
+      window.removeEventListener('authChange', handleAuthChange);
+    };
   }, []);
 
   const handleSelectBranch = (id: string) => {

@@ -15,6 +15,7 @@ import {
   FarmCageData
 } from '@/lib/data/farm-data';
 import { Modal } from '@/components/ui/Modal';
+import { getCurrentUser, filterCagesForUser } from '@/lib/data/auth-users';
 import { EggStepper, EggDefectInput, HenDayActDonut } from '@/components/produksi';
 
 export default function InputProduksiPage() {
@@ -37,15 +38,20 @@ export default function InputProduksiPage() {
   const [l, setL] = useState<number>(0);
 
   useEffect(() => {
-    const list = getFarmCages('all');
-    setCages(list);
+    const user = getCurrentUser();
+    const allList = getFarmCages('all');
+    const userList = filterCagesForUser(allList, user);
+    setCages(userList);
+
+    let defaultId = userList[0]?.id || 'cage-1';
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
       const cageParam = params.get('cage');
-      if (cageParam) {
-        setSelectedCageId(cageParam);
+      if (cageParam && userList.some((c) => c.id === cageParam)) {
+        defaultId = cageParam;
       }
     }
+    setSelectedCageId(defaultId);
   }, []);
 
   const selectedCage = cages.find((c) => c.id === selectedCageId) || cages[0];

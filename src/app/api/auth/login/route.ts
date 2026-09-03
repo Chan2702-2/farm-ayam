@@ -1,37 +1,64 @@
-﻿import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server';
+import { initialUsers } from '@/lib/data/auth-users';
 
-// Placeholder auth endpoint
-// TODO: Implement actual auth with Google Sheets users lookup + session management
-export async function POST(request: Request) {
+export const dynamic = 'force-dynamic';
+
+export async function POST(request: NextRequest) {
   try {
-    const { email, password } = await request.json()
+    const { email, password } = await request.json();
 
     if (!email || !password) {
       return NextResponse.json(
-        { success: false, message: 'Email dan password wajib diisi.' },
+        { success: false, message: 'Username/Email dan kata sandi wajib diisi.' },
         { status: 400 }
-      )
+      );
     }
 
-    // TODO: validate against USERS sheet in Google Sheets
-    // For now return placeholder success
+    const cleanInput = String(email).trim().toLowerCase();
+    const cleanPass = String(password).trim();
+
+    // Look for matching user by username or email
+    const user = initialUsers.find(
+      (u) =>
+        u.username.toLowerCase() === cleanInput ||
+        u.email.toLowerCase() === cleanInput
+    );
+
+    if (!user) {
+      return NextResponse.json(
+        { success: false, message: 'Akun pengawas tidak ditemukan. Periksa username atau ID Anda.' },
+        { status: 401 }
+      );
+    }
+
+    if (user.passwordHash !== cleanPass) {
+      return NextResponse.json(
+        { success: false, message: 'Kata sandi tidak sesuai. Silakan coba lagi.' },
+        { status: 401 }
+      );
+    }
+
+    // Return authenticated user data
     return NextResponse.json({
       success: true,
-      message: 'Login berhasil.',
-      data: {
-        user: {
-          id: '1',
-          name: 'Admin',
-          email,
-          role: 'ADMIN',
-          status: 'ACTIVE',
-        },
+      message: `Selamat datang, ${user.name}!`,
+      user: {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        name: user.name,
+        role: user.role,
+        title: user.title,
+        branchId: user.branchId,
+        branchName: user.branchName,
+        assignedCages: user.assignedCages,
+        avatarInitial: user.avatarInitial,
       },
-    })
-  } catch {
+    });
+  } catch (err: any) {
     return NextResponse.json(
-      { success: false, message: 'Terjadi kesalahan pada server.' },
+      { success: false, message: 'Terjadi kesalahan sistem: ' + err.message },
       { status: 500 }
-    )
+    );
   }
 }

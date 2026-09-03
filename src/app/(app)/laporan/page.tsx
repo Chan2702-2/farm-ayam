@@ -9,7 +9,9 @@ import {
   CheckCircle2,
   Wheat,
   Egg,
-  Plus
+  Plus,
+  Warehouse,
+  Lock
 } from 'lucide-react';
 import {
   getFarmCages,
@@ -31,6 +33,7 @@ import {
   LphImportModal,
   LaporanFilterBar
 } from '@/components/laporan';
+import { getCurrentUser, filterCagesForUser, filterFeedForUser, AuthUser } from '@/lib/data/auth-users';
 
 export default function LaporanPage() {
   const [reportType, setReportType] = useState<'lph' | 'pakan'>('lph');
@@ -43,14 +46,19 @@ export default function LaporanPage() {
   const [showImportModal, setShowImportModal] = useState(false);
   const [exportingPakan, setExportingPakan] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
 
   const loadData = () => {
+    const user = getCurrentUser();
+    setCurrentUser(user);
     const brs = getFarmBranches();
     setBranches(brs);
-    const active = getActiveBranchId();
+    const active = user && user.role === 'PENGAWAS' ? user.branchId : getActiveBranchId();
     setActiveBranch(active);
-    setCages(getFarmCages(active));
-    setFeedItems(getFeedDistribution(active));
+    const branchCages = getFarmCages(active);
+    setCages(filterCagesForUser(branchCages, user));
+    const branchFeed = getFeedDistribution(active);
+    setFeedItems(filterFeedForUser(branchFeed, user));
   };
 
   useEffect(() => {
@@ -58,13 +66,16 @@ export default function LaporanPage() {
 
     const handleBranchChange = () => loadData();
     const handleFeedChange = () => loadData();
+    const handleAuthChange = () => loadData();
 
     window.addEventListener('branchChange', handleBranchChange);
     window.addEventListener('feedChange', handleFeedChange);
+    window.addEventListener('authChange', handleAuthChange);
 
     return () => {
       window.removeEventListener('branchChange', handleBranchChange);
       window.removeEventListener('feedChange', handleFeedChange);
+      window.removeEventListener('authChange', handleAuthChange);
     };
   }, []);
 
@@ -186,6 +197,26 @@ export default function LaporanPage() {
           <span>Pembagian Pakan</span>
         </button>
       </div>
+
+      {/* Pengawas Isolated Report Banner */}
+      {currentUser && currentUser.role === 'PENGAWAS' && (
+        <div className="p-3 bg-amber-50 border border-amber-200 rounded-2xl flex items-center justify-between shadow-xs">
+          <div className="flex items-center gap-2 min-w-0">
+            <Warehouse className="w-4 h-4 text-amber-600 shrink-0" />
+            <div className="min-w-0">
+              <strong className="text-xs text-amber-950 font-bold block truncate">
+                Laporan Khusus: {currentUser.name}
+              </strong>
+              <span className="text-[10px] text-amber-800 truncate block">
+                {currentUser.title} &bull; Menampilkan {cages.length} kandang binaan Anda
+              </span>
+            </div>
+          </div>
+          <span className="text-[10px] font-extrabold bg-amber-200/80 text-amber-900 px-2 py-0.5 rounded-full shrink-0">
+            Akses Terkunci
+          </span>
+        </div>
+      )}
 
       {/* Filter Bar (3 Authentic Branches: 3 Alur, Balai Rupih, Rosam) */}
       <LaporanFilterBar

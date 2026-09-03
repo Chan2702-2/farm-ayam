@@ -32,11 +32,13 @@ import {
   FarmBranch
 } from '@/lib/data/farm-data';
 import { KandangCard } from '@/components/kandang/KandangCard';
+import { getCurrentUser, filterCagesForUser, AuthUser } from '@/lib/data/auth-users';
 import { Modal } from '@/components/ui/Modal';
 
 export default function DashboardPage() {
   const [branches, setBranches] = useState<FarmBranch[]>([]);
   const [activeBranchId, setActiveBranchIdState] = useState<string>('all');
+  const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
   const [cages, setCages] = useState<FarmCageData[]>([]);
   const [filter, setFilter] = useState<'all' | 'attention' | 'below' | 'excellent'>('all');
   const [showExportModal, setShowExportModal] = useState(false);
@@ -45,21 +47,33 @@ export default function DashboardPage() {
   const [selectedDate, setSelectedDate] = useState('2026-09-03');
 
   const loadData = () => {
+    const user = getCurrentUser();
+    setCurrentUser(user);
+
     const brs = getFarmBranches();
     setBranches(brs);
-    const active = getActiveBranchId();
+
+    const active = user && user.role === 'PENGAWAS' ? user.branchId : getActiveBranchId();
     setActiveBranchIdState(active);
-    setCages(getFarmCages(active));
+
+    const branchCages = getFarmCages(active);
+    const userCages = filterCagesForUser(branchCages, user);
+    setCages(userCages);
   };
 
   useEffect(() => {
     loadData();
 
-    const handleBranchChange = () => {
-      loadData();
-    };
+    const handleBranchChange = () => loadData();
+    const handleAuthChange = () => loadData();
+
     window.addEventListener('branchChange', handleBranchChange);
-    return () => window.removeEventListener('branchChange', handleBranchChange);
+    window.addEventListener('authChange', handleAuthChange);
+
+    return () => {
+      window.removeEventListener('branchChange', handleBranchChange);
+      window.removeEventListener('authChange', handleAuthChange);
+    };
   }, []);
 
   const handleSwitchBranch = (id: string) => {
@@ -123,6 +137,28 @@ export default function DashboardPage() {
           <span>{activeBranchId === 'all' ? '5 Cabang' : currentBranch?.shortName}</span>
         </button>
       </div>
+
+      {/* Pengawas Isolated Access Banner */}
+      {currentUser && currentUser.role === 'PENGAWAS' && (
+        <div className="p-3 bg-gradient-to-r from-amber-50 to-amber-100/70 border border-amber-200 rounded-2xl flex items-center justify-between shadow-xs">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-8 h-8 rounded-xl bg-amber-600 text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-xs">
+              {currentUser.avatarInitial}
+            </div>
+            <div className="min-w-0">
+              <strong className="text-xs text-amber-950 font-bold block truncate">
+                Halo, {currentUser.name}!
+              </strong>
+              <span className="text-[10px] text-amber-800 font-medium block truncate">
+                {currentUser.title} &bull; Data Terisolasi
+              </span>
+            </div>
+          </div>
+          <span className="text-[10px] font-extrabold bg-amber-200/80 text-amber-900 px-2 py-0.5 rounded-full shrink-0">
+            {cages.length} Kandang
+          </span>
+        </div>
+      )}
 
       {/* Multi-Branch Quick Horizontal Scroll Tabs */}
       <div className="flex gap-1.5 overflow-x-auto no-scrollbar -mx-3.5 px-3.5 sm:mx-0 sm:px-0 py-0.5">

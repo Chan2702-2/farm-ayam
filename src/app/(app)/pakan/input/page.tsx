@@ -20,6 +20,7 @@ import {
   FarmCageData
 } from '@/lib/data/farm-data';
 import { Modal } from '@/components/ui/Modal';
+import { getCurrentUser, filterCagesForUser } from '@/lib/data/auth-users';
 
 export default function InputPakanPage() {
   const router = useRouter();
@@ -37,14 +38,18 @@ export default function InputPakanPage() {
   const [sisaKg, setSisaKg] = useState<number>(0);
 
   useEffect(() => {
-    const list = getFarmCages('all');
-    setCages(list);
+    const user = getCurrentUser();
+    const allList = getFarmCages('all');
+    const userList = filterCagesForUser(allList, user);
+    setCages(userList);
 
-    let cageId = list[0]?.id || 'cage-1';
+    let cageId = userList[0]?.id || 'cage-1';
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
       const qCage = params.get('cage');
-      if (qCage) cageId = qCage;
+      if (qCage && userList.some((c) => c.id === qCage)) {
+        cageId = qCage;
+      }
     }
     setSelectedCageId(cageId);
   }, []);

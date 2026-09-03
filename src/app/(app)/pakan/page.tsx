@@ -22,6 +22,7 @@ import {
   FarmBranch
 } from '@/lib/data/farm-data';
 import { FeedDistributionTable } from '@/components/laporan';
+import { getCurrentUser, filterFeedForUser, AuthUser } from '@/lib/data/auth-users';
 
 export default function PakanOverviewPage() {
   const [branches, setBranches] = useState<FarmBranch[]>([]);
@@ -32,11 +33,16 @@ export default function PakanOverviewPage() {
   const [selectedDate, setSelectedDate] = useState('2026-09-03');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
+  const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
+
   const loadData = () => {
+    const user = getCurrentUser();
+    setCurrentUser(user);
     setBranches(getFarmBranches());
-    const active = getActiveBranchId();
+    const active = user && user.role === 'PENGAWAS' ? user.branchId : getActiveBranchId();
     setActiveBranch(active);
-    setFeedItems(getFeedDistribution(active));
+    const branchFeed = getFeedDistribution(active);
+    setFeedItems(filterFeedForUser(branchFeed, user));
   };
 
   useEffect(() => {
@@ -44,13 +50,16 @@ export default function PakanOverviewPage() {
 
     const handleFeedChange = () => loadData();
     const handleBranchChange = () => loadData();
+    const handleAuthChange = () => loadData();
 
     window.addEventListener('feedChange', handleFeedChange);
     window.addEventListener('branchChange', handleBranchChange);
+    window.addEventListener('authChange', handleAuthChange);
 
     return () => {
       window.removeEventListener('feedChange', handleFeedChange);
       window.removeEventListener('branchChange', handleBranchChange);
+      window.removeEventListener('authChange', handleAuthChange);
     };
   }, []);
 

@@ -10,7 +10,10 @@ import {
   Check,
   ShieldCheck,
   Layers,
-  LogOut
+  LogOut,
+  User,
+  Warehouse,
+  Lock
 } from 'lucide-react';
 import {
   getFarmBranches,
@@ -18,6 +21,11 @@ import {
   setActiveBranchId,
   FarmBranch
 } from '@/lib/data/farm-data';
+import {
+  getCurrentUser,
+  logoutUser,
+  AuthUser
+} from '@/lib/data/auth-users';
 import { Modal } from '@/components/ui/Modal';
 
 interface AppHeaderProps {
@@ -36,24 +44,49 @@ export function AppHeader({
   const router = useRouter();
   const [branches, setBranches] = useState<FarmBranch[]>([]);
   const [activeBranch, setActiveBranch] = useState<string>('all');
+  const [currentUser, setCurrentUserState] = useState<AuthUser | null>(null);
   const [showBranchModal, setShowBranchModal] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
 
   useEffect(() => {
     setBranches(getFarmBranches());
     setActiveBranch(getActiveBranchId());
+    setCurrentUserState(getCurrentUser());
 
     const handleBranchChange = () => {
       setActiveBranch(getActiveBranchId());
     };
+    const handleAuthChange = () => {
+      setCurrentUserState(getCurrentUser());
+    };
+
     window.addEventListener('branchChange', handleBranchChange);
-    return () => window.removeEventListener('branchChange', handleBranchChange);
+    window.addEventListener('authChange', handleAuthChange);
+
+    return () => {
+      window.removeEventListener('branchChange', handleBranchChange);
+      window.removeEventListener('authChange', handleAuthChange);
+    };
   }, []);
 
   const handleSelectBranch = (id: string) => {
+    // If pengawas, verify if they can switch
+    if (currentUser && currentUser.role === 'PENGAWAS') {
+      if (id !== 'all' && id !== currentUser.branchId) {
+        alert(`Akses Dibatasi: Anda hanya memiliki izin akses untuk ${currentUser.branchName}`);
+        return;
+      }
+    }
+
     setActiveBranch(id);
     setActiveBranchId(id);
     setShowBranchModal(false);
+  };
+
+  const handleLogout = () => {
+    logoutUser();
+    setShowProfileModal(false);
+    router.push('/login');
   };
 
   const handleBack = () => {
@@ -64,8 +97,13 @@ export function AppHeader({
     }
   };
 
+  const isPengawas = currentUser?.role === 'PENGAWAS';
   const currentBranchObj = branches.find((b) => b.id === activeBranch);
-  const branchLabel = activeBranch === 'all' ? 'Semua Cabang' : (currentBranchObj?.shortName || 'Cabang');
+  const branchLabel = isPengawas
+    ? (currentUser?.assignedCages[0]?.split(' ')[0] || 'Kandang Anda')
+    : activeBranch === 'all'
+    ? 'Semua Cabang'
+    : (currentBranchObj?.shortName || 'Cabang');
 
   return (
     <>
@@ -92,7 +130,7 @@ export function AppHeader({
                     YUKI<span className="text-[#0284c7] ml-0.5">FARM</span>
                   </span>
                   <span className="hidden xs:inline-flex px-1.5 py-0.2 rounded-full bg-[#e0f2fe] text-[#0369a1] text-[9px] font-bold uppercase shrink-0">
-                    5 Unit
+                    {isPengawas ? 'Pengawas' : 'Manager'}
                   </span>
                 </div>
                 {title ? (
@@ -101,7 +139,7 @@ export function AppHeader({
                   </span>
                 ) : (
                   <span className="text-[9px] text-slate-400 font-medium truncate mt-0.5">
-                    Mobile ERP &bull; Biosecure OK
+                    {isPengawas ? currentUser?.title : 'Mobile ERP &bull; Biosecure OK'}
                   </span>
                 )}
               </div>
@@ -112,21 +150,33 @@ export function AppHeader({
             {/* Multi-Branch Selector Button */}
             <button
               onClick={() => setShowBranchModal(true)}
-              className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-sky-50 hover:bg-sky-100 text-[#0369a1] text-xs font-bold border border-sky-200/80 active:scale-95 transition-all"
-              title="Pilih Cabang Peternakan"
+              className={`flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-bold border transition-all active:scale-95 ${
+                isPengawas
+                  ? 'bg-amber-50 text-amber-900 border-amber-200 hover:bg-amber-100'
+                  : 'bg-sky-50 text-[#0369a1] border-sky-200/80 hover:bg-sky-100'
+              }`}
+              title={isPengawas ? 'Unit Kandang Anda' : 'Pilih Cabang Peternakan'}
             >
-              <Building2 className="w-3.5 h-3.5 text-[#0284c7] shrink-0" />
+              {isPengawas ? (
+                <Warehouse className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+              ) : (
+                <Building2 className="w-3.5 h-3.5 text-[#0284c7] shrink-0" />
+              )}
               <span className="max-w-[85px] sm:max-w-[140px] truncate">{branchLabel}</span>
-              <ChevronDown className="w-3 h-3 text-[#0284c7] opacity-70 shrink-0" />
+              <ChevronDown className="w-3 h-3 opacity-70 shrink-0" />
             </button>
 
             {/* Profile Avatar */}
             <button
               onClick={() => setShowProfileModal(true)}
               aria-label="Profile Operator"
-              className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[#e0f2fe] text-[#0369a1] font-bold text-[11px] sm:text-xs flex items-center justify-center hover:ring-2 hover:ring-[#0284c7] active:scale-95 transition-all shrink-0"
+              className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full font-bold text-[11px] sm:text-xs flex items-center justify-center hover:ring-2 active:scale-95 transition-all shrink-0 ${
+                isPengawas
+                  ? 'bg-amber-100 text-amber-900 hover:ring-amber-400'
+                  : 'bg-[#e0f2fe] text-[#0369a1] hover:ring-[#0284c7]'
+              }`}
             >
-              OP
+              {currentUser?.avatarInitial || 'AP'}
             </button>
           </div>
         </div>
@@ -136,167 +186,168 @@ export function AppHeader({
       <Modal
         isOpen={showBranchModal}
         onClose={() => setShowBranchModal(false)}
-        title="Pilih Cabang Peternakan"
-        subtitle="Filter data operasional per cabang lokasi"
+        title={isPengawas ? 'Hak Akses Unit Kandang' : 'Pilih Cabang Peternakan'}
+        subtitle={
+          isPengawas
+            ? `Akun Anda terdaftar khusus untuk ${currentUser?.branchName}`
+            : 'Filter data operasional per cabang lokasi'
+        }
       >
         <div className="space-y-2.5">
-          {/* Option: Semua Cabang (Konsolidasi) */}
-          <button
-            onClick={() => handleSelectBranch('all')}
-            className={`w-full p-3.5 rounded-2xl border transition-all text-left flex flex-col gap-2 ${
-              activeBranch === 'all'
-                ? 'bg-[#0369a1] text-white border-[#0369a1] shadow-md shadow-sky-900/15'
-                : 'bg-white border-slate-200/80 hover:bg-slate-50/90'
-            }`}
-          >
-            <div className="flex items-center justify-between gap-2">
-              <div className="flex items-center gap-2.5">
-                <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${
-                  activeBranch === 'all' ? 'bg-white/20 text-white' : 'bg-sky-100 text-[#0284c7]'
-                }`}>
-                  <Layers className="w-4 h-4" />
-                </div>
+          {isPengawas ? (
+            <div className="space-y-3">
+              <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl flex items-start gap-2 text-xs text-amber-900">
+                <Lock className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
                 <div>
-                  <h4 className={`font-jakarta font-bold text-sm ${activeBranch === 'all' ? 'text-white' : 'text-slate-900'}`}>
-                    Semua Cabang (Konsolidasi)
-                  </h4>
-                  <span className={`text-[10px] ${activeBranch === 'all' ? 'text-sky-100' : 'text-slate-400'}`}>
-                    5 Cabang &bull; 70 Unit Kandang
+                  <strong className="block font-bold">Akses Kandang Terisolasi</strong>
+                  <span>
+                    Anda bertugas sebagai <strong>{currentUser?.title}</strong> di {currentUser?.branchName}. Data yang ditampilkan otomatis terkunci pada unit kandang binaan Anda.
                   </span>
                 </div>
               </div>
 
-              <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${
-                activeBranch === 'all' ? 'border-white bg-white' : 'border-slate-300 bg-white'
-              }`}>
-                {activeBranch === 'all' && <Check className="w-3 h-3 text-[#0369a1] stroke-[3]" />}
+              <div className="space-y-1.5">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                  Kandang yang Anda Awasi
+                </span>
+                {currentUser?.assignedCages.map((cageName, idx) => (
+                  <div
+                    key={idx}
+                    className="p-3 bg-white border border-slate-200 rounded-xl flex items-center justify-between text-xs"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Warehouse className="w-4 h-4 text-amber-600 shrink-0" />
+                      <strong className="text-slate-800">{cageName}</strong>
+                    </div>
+                    <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">
+                      Aktif
+                    </span>
+                  </div>
+                ))}
               </div>
             </div>
-
-            <div className={`flex items-center justify-between pt-1.5 border-t ${
-              activeBranch === 'all' ? 'border-sky-700/50 text-sky-100' : 'border-slate-100 text-slate-600'
-            } text-xs`}>
-              <span>Populasi: <strong className={activeBranch === 'all' ? 'text-white' : 'text-slate-800'}>177.475</strong> ekor</span>
-              <span>Prod: <strong className={activeBranch === 'all' ? 'text-white' : 'text-[#0284c7]'}>170.084</strong> btr</span>
-              <span className={`px-1.5 py-0.2 rounded font-bold text-[10px] ${
-                activeBranch === 'all' ? 'bg-white/20 text-white' : 'bg-sky-50 text-[#0284c7]'
-              }`}>
-                Avg 92.8%
-              </span>
-            </div>
-          </button>
-
-          <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-1 pt-1">
-            Daftar 5 Unit Cabang
-          </div>
-
-          {/* 5 Branches Cards */}
-          {branches.map((b) => {
-            const isSelected = activeBranch === b.id;
-            return (
+          ) : (
+            <>
+              {/* Option: Semua Cabang (Konsolidasi) */}
               <button
-                key={b.id}
-                onClick={() => handleSelectBranch(b.id)}
+                onClick={() => handleSelectBranch('all')}
                 className={`w-full p-3.5 rounded-2xl border transition-all text-left flex flex-col gap-2 ${
-                  isSelected
-                    ? 'bg-sky-50/90 border-[#0284c7] shadow-xs'
+                  activeBranch === 'all'
+                    ? 'bg-[#0369a1] text-white border-[#0369a1] shadow-md shadow-sky-900/15'
                     : 'bg-white border-slate-200/80 hover:bg-slate-50/90'
                 }`}
               >
-                {/* Top Row */}
                 <div className="flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <span className={`px-2 py-0.5 rounded-lg text-[10px] font-extrabold tracking-wide shrink-0 ${
-                      isSelected ? 'bg-[#0284c7] text-white' : 'bg-slate-100 text-slate-700'
+                  <div className="flex items-center gap-2.5">
+                    <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${
+                      activeBranch === 'all' ? 'bg-white/20 text-white' : 'bg-sky-100 text-[#0284c7]'
                     }`}>
-                      {b.code}
-                    </span>
-                    <h4 className="font-jakarta font-bold text-sm text-slate-900 truncate">
-                      {b.name}
-                    </h4>
-                    {b.code === '3-ALUR' && (
-                      <span className="px-1.5 py-0.2 rounded-full bg-amber-100 text-amber-800 text-[9px] font-bold shrink-0">
-                        Pusat
-                      </span>
-                    )}
+                      <Layers className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h4 className={`font-jakarta font-bold text-sm ${activeBranch === 'all' ? 'text-white' : 'text-slate-900'}`}>
+                        Semua Cabang (Konsolidasi)
+                      </h4>
+                      <p className={`text-xs ${activeBranch === 'all' ? 'text-sky-100' : 'text-slate-500'}`}>
+                        Pusat Monitoring 5 Lokasi Farm
+                      </p>
+                    </div>
                   </div>
-
-                  <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${
-                    isSelected ? 'border-[#0284c7] bg-[#0284c7]' : 'border-slate-300 bg-white'
-                  }`}>
-                    {isSelected && <Check className="w-3 h-3 text-white stroke-[3]" />}
-                  </div>
-                </div>
-
-                {/* Sub-info Row: Location & Cages */}
-                <div className="flex items-center justify-between text-xs text-slate-500 font-medium">
-                  <span className="truncate">{b.location}</span>
-                  <span className="text-slate-700 font-semibold shrink-0 ml-2">{b.totalCages} Kandang</span>
-                </div>
-
-                {/* Bottom Row: Metrics Strip */}
-                <div className="flex items-center justify-between pt-1.5 border-t border-slate-100/80 text-xs">
-                  <span className="text-slate-600">
-                    Pop: <strong className="text-slate-800">{b.populasi.toLocaleString('id-ID')}</strong> ekr
-                  </span>
-                  <span className="text-slate-600">
-                    Prod: <strong className="text-[#0369a1]">{b.produksi.toLocaleString('id-ID')}</strong> btr
-                  </span>
-                  <span className={`px-1.5 py-0.2 rounded font-bold text-[10px] ${
-                    b.act >= 95 ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'
-                  }`}>
-                    ACT {b.act}%
-                  </span>
+                  {activeBranch === 'all' && <Check className="w-5 h-5 text-white shrink-0" />}
                 </div>
               </button>
-            );
-          })}
+
+              {/* 5 Cabang Cards */}
+              {branches.map((b) => {
+                const isSelected = activeBranch === b.id;
+                return (
+                  <button
+                    key={b.id}
+                    onClick={() => handleSelectBranch(b.id)}
+                    className={`w-full p-3 rounded-2xl border transition-all text-left flex flex-col gap-1.5 ${
+                      isSelected
+                        ? 'bg-[#0284c7] text-white border-[#0284c7] shadow-md shadow-sky-600/20'
+                        : 'bg-white border-slate-200/80 hover:bg-slate-50'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className={`text-[10px] font-extrabold px-1.5 py-0.5 rounded-md shrink-0 ${
+                          isSelected ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-700'
+                        }`}>
+                          {b.code}
+                        </span>
+                        <h4 className={`font-jakarta font-bold text-xs sm:text-sm truncate ${
+                          isSelected ? 'text-white' : 'text-slate-900'
+                        }`}>
+                          {b.name}
+                        </h4>
+                      </div>
+                      {isSelected && <Check className="w-4 h-4 text-white shrink-0" />}
+                    </div>
+                  </button>
+                );
+              })}
+            </>
+          )}
         </div>
       </Modal>
 
-      {/* Profile & Shift Modal */}
+      {/* User Profile Modal */}
       <Modal
         isOpen={showProfileModal}
         onClose={() => setShowProfileModal(false)}
-        title="Admin Operasional Enterprise"
-        subtitle="Yuki Farm Multi-Branch Core v2.5"
+        title="Profil Pengguna"
+        subtitle="Informasi akun & wewenang operasional"
       >
         <div className="space-y-3.5">
-          <div className="flex items-center gap-3 p-3 bg-sky-50/80 rounded-2xl border border-sky-100">
-            <div className="w-11 h-11 rounded-full bg-[#0284c7] text-white font-bold flex items-center justify-center text-sm">
-              HQ
+          <div className="p-4 rounded-2xl bg-gradient-to-br from-[#0284c7]/10 to-[#0369a1]/15 border border-sky-100 flex items-center gap-3.5">
+            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-bold text-base shadow-sm shrink-0 ${
+              isPengawas ? 'bg-amber-600 text-white' : 'bg-[#0284c7] text-white'
+            }`}>
+              {currentUser?.avatarInitial || 'AP'}
             </div>
-            <div className="min-w-0">
-              <h4 className="font-jakarta font-bold text-slate-900 text-sm leading-tight">
-                Headquarters Admin
+            <div className="min-w-0 flex-1">
+              <h4 className="font-jakarta font-bold text-slate-900 text-sm leading-tight truncate">
+                {currentUser?.name || 'Admin Pusat'}
               </h4>
-              <p className="text-xs text-sky-700 font-medium">Monitoring 5 Cabang Terintegrasi</p>
-              <span className="inline-flex items-center gap-1 text-[10px] text-green-700 bg-green-100/80 px-2 py-0.5 rounded-full font-semibold mt-1">
-                <ShieldCheck className="w-3 h-3" /> Biosecurity Level A
-              </span>
+              <p className="text-xs text-sky-700 font-medium truncate">
+                {currentUser?.title || 'Manager Utama Peternakan'}
+              </p>
+              <div className="flex items-center gap-1.5 mt-1">
+                <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${
+                  isPengawas ? 'bg-amber-100 text-amber-800' : 'bg-[#e0f2fe] text-[#0369a1]'
+                }`}>
+                  {currentUser?.role || 'ADMIN'}
+                </span>
+                <span className="text-[10px] text-slate-500 truncate">
+                  {currentUser?.branchName}
+                </span>
+              </div>
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-2 text-xs">
-            <div className="p-2.5 bg-slate-50 rounded-xl">
-              <span className="text-slate-500 block">Total Unit Cabang</span>
-              <span className="font-bold text-slate-800">5 Peternakan</span>
-            </div>
-            <div className="p-2.5 bg-slate-50 rounded-xl">
-              <span className="text-slate-500 block">Total Populasi</span>
-              <span className="font-bold text-slate-800">177.475 Ekor</span>
+          <div className="space-y-2 text-xs">
+            <div className="p-3 bg-slate-50 rounded-xl space-y-1">
+              <span className="text-slate-400 block text-[10px] uppercase font-bold">
+                Unit Kandang Ditugaskan
+              </span>
+              <strong className="text-slate-800 block text-xs">
+                {currentUser?.assignedCages.includes('all')
+                  ? 'Seluruh Unit Kandang (70 Unit)'
+                  : currentUser?.assignedCages.join(', ')}
+              </strong>
             </div>
           </div>
 
           <div className="pt-2 flex flex-col gap-2">
-            <Link
-              href="/login"
-              onClick={() => setShowProfileModal(false)}
-              className="w-full h-11 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 font-semibold text-xs flex items-center justify-center gap-2"
+            <button
+              onClick={handleLogout}
+              className="w-full h-11 rounded-xl bg-red-50 hover:bg-red-100 active:scale-95 text-red-600 font-bold text-xs flex items-center justify-center gap-2 transition-all"
             >
               <LogOut className="w-4 h-4" />
-              <span>Keluar / Ganti Akun</span>
-            </Link>
+              <span>Keluar / Ganti Akun Pengawas</span>
+            </button>
           </div>
         </div>
       </Modal>

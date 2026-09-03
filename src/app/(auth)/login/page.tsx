@@ -1,162 +1,227 @@
-'use client'
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import Link from 'next/link'
+'use client';
+
+import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import {
+  ShieldCheck,
+  Lock,
+  User,
+  Eye,
+  EyeOff,
+  CheckCircle2,
+  AlertCircle,
+  Loader2,
+  Building2,
+  Warehouse
+} from 'lucide-react';
+import { initialUsers, setCurrentUser, AuthUser } from '@/lib/data/auth-users';
 
 export default function LoginPage() {
-  const router = useRouter()
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [showPassword, setShowPassword] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState('')
+  const router = useRouter();
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
-    setError('')
+  const performLogin = async (userParam?: AuthUser) => {
+    setIsLoading(true);
+    setError(null);
 
     try {
-      // Simulate API call
+      if (userParam) {
+        // Quick demo login
+        setCurrentUser(userParam);
+        router.push('/dashboard');
+        return;
+      }
+
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
-      })
-      
-      if (res.ok) {
-        router.push('/dashboard')
-      } else {
-        const data = await res.json().catch(() => ({}))
-        setError(data.message || 'Login failed. Please check your credentials.')
+        body: JSON.stringify({ email: username, password }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || 'Login gagal. Periksa username dan kata sandi.');
       }
-    } catch (err) {
-      setError('An error occurred during login. Please try again later.')
+
+      setCurrentUser(data.user);
+      router.push('/dashboard');
+    } catch (err: any) {
+      setError(err.message || 'Terjadi kesalahan sistem');
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
+
+  const handleFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    performLogin();
+  };
 
   return (
-    <div className="min-h-screen bg-[#F0F6FA] flex flex-col pt-12 pb-8 px-4 font-['Plus_Jakarta_Sans',sans-serif] items-center">
-      <div className="w-full max-w-[420px] flex flex-col flex-grow">
-        
-        {/* Logo & Headline */}
-        <div className="flex flex-col items-center mb-8">
-          <div className="w-20 h-20 bg-white rounded-2xl shadow-sm flex items-center justify-center mb-4 relative overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-br from-[#e0f2fe] to-transparent opacity-50"></div>
-            <svg xmlns="http://www.w3.org/2000/svg" className="w-12 h-12 text-[#0284c7] relative z-10" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/></svg>
+    <div className="min-h-screen bg-[#F0F6FA] flex flex-col justify-center items-center px-4 py-8 font-['Plus_Jakarta_Sans',sans-serif]">
+      <div className="w-full max-w-md space-y-4">
+        {/* Header Branding */}
+        <div className="text-center space-y-1.5">
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-[#0284c7] to-[#0369a1] text-white shadow-md shadow-sky-600/25 mb-1 font-jakarta font-extrabold text-xl">
+            YF
           </div>
-          
-          <div className="px-3 py-1 bg-[#e0f2fe] rounded-full flex items-center gap-2 mb-4">
-            <span className="w-2 h-2 rounded-full bg-[#0284c7] animate-pulse"></span>
-            <span className="text-[11px] font-semibold text-[#0369a1] tracking-wide">AGRI-OS BIOSECURE CORE</span>
-          </div>
-          
-          <h1 className="text-3xl font-extrabold text-[#0369a1] tracking-tight">YUKI<span className="text-[#0284c7]">FARM</span></h1>
-          <p className="text-[#3f4850] text-sm mt-1">Sistem Manajemen Peternakan Modern</p>
+          <h1 className="font-jakarta font-extrabold text-2xl text-slate-900 tracking-tight">
+            YUKI<span className="text-[#0284c7] ml-0.5">FARM</span>
+          </h1>
+          <p className="text-xs text-slate-500 font-medium max-w-xs mx-auto">
+            Sistem ERP Peternakan Ayam Layer &bull; Akses Terbatas Pengawas Kandang
+          </p>
         </div>
 
-        {/* Offline Ready Banner */}
-        <div className="bg-white/60 backdrop-blur-sm rounded-xl p-3 mb-6 flex items-start gap-3 border border-white/40 shadow-sm">
-          <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-[#0284c7] mt-0.5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
-          <div>
-            <h3 className="text-sm font-semibold text-[#131b2e]">Offline-Ready Mode Aktif</h3>
-            <p className="text-xs text-[#3f4850] mt-0.5 leading-relaxed">Data akan otomatis tersinkronisasi ketika koneksi internet kembali tersedia.</p>
+        {/* Login Box */}
+        <div className="bg-white rounded-3xl p-5 sm:p-6 shadow-sm border border-slate-100 space-y-4">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+            <div>
+              <h2 className="font-jakarta font-bold text-base text-slate-900">
+                Masuk ke Akun
+              </h2>
+              <p className="text-xs text-slate-400">
+                Gunakan ID Pengawas atau Username
+              </p>
+            </div>
+            <div className="w-8 h-8 rounded-xl bg-sky-50 text-[#0284c7] flex items-center justify-center">
+              <ShieldCheck className="w-4 h-4" />
+            </div>
           </div>
-        </div>
 
-        {/* Login Card */}
-        <div className="bg-white rounded-2xl p-6 shadow-sm mb-6">
-          <h2 className="text-lg font-bold text-[#131b2e] mb-1">Masuk ke Akun</h2>
-          <p className="text-sm text-[#3f4850] mb-6">Silakan masukkan kredensial Anda</p>
-          
           {error && (
-            <div className="bg-[#fee2e2] text-[#dc2626] text-sm p-3 rounded-lg mb-4">
-              {error}
+            <div className="p-3 bg-red-50 border border-red-200 rounded-xl flex items-start gap-2 text-xs text-red-700">
+              <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+              <span>{error}</span>
             </div>
           )}
 
-          <form onSubmit={handleLogin} className="flex flex-col gap-4">
-            <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-semibold text-[#131b2e]">Email / ID Pengguna</label>
-              <input 
-                type="text" 
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full h-12 px-4 rounded-xl border border-[#e2e8f0] bg-[#f8fafc] focus:bg-white focus:border-[#0284c7] focus:ring-2 focus:ring-[#e0f2fe] transition-all outline-none text-[#131b2e] text-sm"
-                placeholder="Masukkan email atau ID"
-                required
-              />
-            </div>
-
-            <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-semibold text-[#131b2e]">Kata Sandi</label>
+          <form onSubmit={handleFormSubmit} className="space-y-3">
+            <div>
+              <label className="text-xs font-bold text-slate-700 block mb-1">
+                Username / ID Pengawas
+              </label>
               <div className="relative">
-                <input 
-                  type={showPassword ? "text" : "password"} 
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full h-12 pl-4 pr-12 rounded-xl border border-[#e2e8f0] bg-[#f8fafc] focus:bg-white focus:border-[#0284c7] focus:ring-2 focus:ring-[#e0f2fe] transition-all outline-none text-[#131b2e] text-sm"
-                  placeholder="Masukkan kata sandi"
+                <User className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <input
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder="Contoh: indra, sandi, admin"
+                  className="w-full h-11 pl-10 pr-4 rounded-xl bg-slate-50 border border-slate-200 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-[#0284c7] focus:bg-white transition-all font-medium"
                   required
                 />
-                <button 
-                  type="button" 
+              </div>
+            </div>
+
+            <div>
+              <label className="text-xs font-bold text-slate-700 block mb-1">
+                Kata Sandi
+              </label>
+              <div className="relative">
+                <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="w-full h-11 pl-10 pr-11 rounded-xl bg-slate-50 border border-slate-200 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-[#0284c7] focus:bg-white transition-all font-medium"
+                  required
+                />
+                <button
+                  type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center text-[#64748b] hover:text-[#0284c7]"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1"
                 >
-                  {showPassword ? (
-                    <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
-                  ) : (
-                    <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                  )}
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
             </div>
 
-            <div className="flex items-center justify-between mt-1">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" className="w-4 h-4 rounded border-[#cbd5e1] text-[#0284c7] focus:ring-[#0284c7]" />
-                <span className="text-sm text-[#3f4850]">Ingat saya</span>
-              </label>
-              <a href="#" className="text-sm font-semibold text-[#0284c7] hover:underline">Lupa kata sandi?</a>
-            </div>
-
-            <button 
-              type="submit" 
+            <button
+              type="submit"
               disabled={isLoading}
-              className="w-full h-12 mt-2 bg-[#0369a1] hover:bg-[#0284c7] active:bg-[#075985] text-white rounded-xl font-bold transition-colors shadow-[0_4px_12px_rgba(3,105,161,0.25)] flex items-center justify-center disabled:opacity-70 disabled:cursor-not-allowed"
+              className="w-full h-12 rounded-xl bg-[#0284c7] hover:bg-[#0369a1] active:scale-95 text-white font-bold text-sm shadow-md shadow-sky-600/25 flex items-center justify-center gap-2 transition-all disabled:opacity-60"
             >
               {isLoading ? (
-                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-              ) : 'Masuk'}
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>Memverifikasi Akses...</span>
+                </>
+              ) : (
+                <span>Masuk Sekarang</span>
+              )}
             </button>
           </form>
-        </div>
 
-        {/* Bottom Indicators */}
-        <div className="mt-auto grid grid-cols-2 gap-3">
-          <div className="bg-white/80 rounded-lg p-3 flex flex-col items-center justify-center shadow-sm">
-            <span className="text-xs text-[#64748b] mb-1">Site Aktif</span>
-            <span className="text-sm font-bold text-[#131b2e]">Farm Cikijing</span>
-          </div>
-          <div className="bg-white/80 rounded-lg p-3 flex flex-col items-center justify-center shadow-sm">
-            <span className="text-xs text-[#64748b] mb-1">Status Sistem</span>
-            <div className="flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-[#10b981]"></span>
-              <span className="text-sm font-bold text-[#10b981]">Normal</span>
+          {/* Quick Demo Accounts Selection */}
+          <div className="pt-2 border-t border-slate-100 space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                Pilih Akun Cepat (Pengawas Lapangan)
+              </span>
+              <span className="text-[10px] text-sky-600 font-semibold">1-Klik Masuk</span>
+            </div>
+
+            <div className="space-y-1.5 max-h-56 overflow-y-auto no-scrollbar pr-0.5">
+              {initialUsers.slice(0, 6).map((u) => {
+                const isAdmin = u.role === 'ADMIN';
+                return (
+                  <button
+                    key={u.id}
+                    type="button"
+                    onClick={() => performLogin(u)}
+                    className={`w-full p-2.5 rounded-xl border text-left flex items-center justify-between transition-all hover:scale-[1.01] active:scale-95 ${
+                      isAdmin
+                        ? 'bg-sky-50/70 border-sky-200 hover:bg-sky-100/80'
+                        : 'bg-slate-50/70 border-slate-200/70 hover:bg-amber-50/50 hover:border-amber-200'
+                    }`}
+                  >
+                    <div className="min-w-0 pr-2">
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-bold text-xs text-slate-900">
+                          {u.name}
+                        </span>
+                        <span
+                          className={`text-[9px] font-extrabold px-1.5 py-0.2 rounded-full ${
+                            isAdmin
+                              ? 'bg-[#0284c7] text-white'
+                              : 'bg-amber-100 text-amber-800'
+                          }`}
+                        >
+                          {isAdmin ? 'ADMIN' : 'PENGAWAS'}
+                        </span>
+                      </div>
+                      <span className="text-[11px] text-slate-500 block truncate">
+                        {u.title} &bull; {u.branchName}
+                      </span>
+                    </div>
+
+                    <div className="text-right shrink-0">
+                      <span className="text-[10px] font-mono text-slate-400 block">
+                        ID: {u.username}
+                      </span>
+                    </div>
+                  </button>
+                );
+              })}
             </div>
           </div>
         </div>
 
-        <div className="text-center mt-6 text-xs text-[#94a3b8]">
-          &copy; {new Date().getFullYear()} Yuki Farm • v2.0.1
+        {/* Security Notice */}
+        <div className="p-3 bg-sky-50/60 rounded-2xl border border-sky-100 text-[11px] text-slate-600 flex items-start gap-2">
+          <Warehouse className="w-4 h-4 text-[#0284c7] shrink-0 mt-0.5" />
+          <p>
+            <strong>Hak Akses Terisolasi:</strong> Pengawas kandang hanya dapat melihat, menginput, dan menganalisis unit kandang binaannya masing-masing demi privasi dan integritas data lapangan.
+          </p>
         </div>
       </div>
     </div>
-  )
+  );
 }

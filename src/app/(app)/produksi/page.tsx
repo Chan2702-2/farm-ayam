@@ -14,6 +14,7 @@ import {
 } from '@/lib/data/farm-data';
 import { ProduksiSummaryCard, ProduksiCageItem } from '@/components/produksi';
 import { LphExportModal, LphImportModal } from '@/components/laporan';
+import { getCurrentUser, filterCagesForUser, AuthUser } from '@/lib/data/auth-users';
 
 export default function ProduksiOverviewPage() {
   const [branches, setBranches] = useState<FarmBranch[]>([]);
@@ -24,22 +25,32 @@ export default function ProduksiOverviewPage() {
   const [showImportModal, setShowImportModal] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
+  const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
+
   const loadData = () => {
+    const user = getCurrentUser();
+    setCurrentUser(user);
     const brs = getFarmBranches();
     setBranches(brs);
-    const active = getActiveBranchId();
+    const active = user && user.role === 'PENGAWAS' ? user.branchId : getActiveBranchId();
     setActiveBranch(active);
-    setCages(getFarmCages(active));
+    const branchCages = getFarmCages(active);
+    setCages(filterCagesForUser(branchCages, user));
   };
 
   useEffect(() => {
     loadData();
 
-    const handleBranchChange = () => {
-      loadData();
-    };
+    const handleBranchChange = () => loadData();
+    const handleAuthChange = () => loadData();
+
     window.addEventListener('branchChange', handleBranchChange);
-    return () => window.removeEventListener('branchChange', handleBranchChange);
+    window.addEventListener('authChange', handleAuthChange);
+
+    return () => {
+      window.removeEventListener('branchChange', handleBranchChange);
+      window.removeEventListener('authChange', handleAuthChange);
+    };
   }, []);
 
   const handleSelectBranch = (id: string) => {
