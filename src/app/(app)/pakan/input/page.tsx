@@ -21,6 +21,7 @@ import {
 } from '@/lib/data/farm-data';
 import { Modal } from '@/components/ui/Modal';
 import { getCurrentUser, filterCagesForUser } from '@/lib/data/auth-users';
+import { addActivityLog } from '@/lib/data/activity-log';
 
 export default function InputPakanPage() {
   const router = useRouter();
@@ -103,6 +104,17 @@ export default function InputPakanPage() {
     // Update or insert
     const updated = [newItem, ...existingFeed.filter((f) => f.kandang !== selectedCage.fullName)];
     saveFeedDistribution(updated);
+
+    const user = getCurrentUser();
+    addActivityLog({
+      userName: user?.name || 'Pengawas Lapangan',
+      userRole: user?.role || 'PENGAWAS',
+      branchId: selectedCage.branchId,
+      branchName: selectedCage.branchName,
+      actionType: 'PAKAN',
+      title: `Alokasi Pakan ${selectedCage.name}`,
+      description: `Alokasi ${kirimSak} sak (${kirimKg} kg) pakan ${jenisPakan} untuk ${populasi.toLocaleString('id-ID')} ekor ayam.`,
+    });
 
     setShowConfirmModal(false);
     setShowToast(true);

@@ -13,7 +13,8 @@ import {
   LogOut,
   User,
   Warehouse,
-  Lock
+  Lock,
+  History
 } from 'lucide-react';
 import {
   getFarmBranches,
@@ -100,7 +101,7 @@ export function AppHeader({
   const isPengawas = currentUser?.role === 'PENGAWAS';
   const currentBranchObj = branches.find((b) => b.id === activeBranch);
   const branchLabel = isPengawas
-    ? (currentUser?.assignedCages[0]?.split(' ')[0] || 'Kandang Anda')
+    ? (currentUser?.branchName?.replace('Cabang ', '').replace(' (Pusat)', '') || 'Cabang Anda')
     : activeBranch === 'all'
     ? 'Semua Cabang'
     : (currentBranchObj?.shortName || 'Cabang');
@@ -166,6 +167,15 @@ export function AppHeader({
               <ChevronDown className="w-3 h-3 opacity-70 shrink-0" />
             </button>
 
+            {/* Log Aktivitas Button */}
+            <Link
+              href="/log"
+              className="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center active:scale-95 transition-all shrink-0"
+              title="Log Aktivitas & Riwayat Audit"
+            >
+              <History className="w-4 h-4 text-slate-600" />
+            </Link>
+
             {/* Profile Avatar */}
             <button
               onClick={() => setShowProfileModal(true)}
@@ -199,31 +209,24 @@ export function AppHeader({
               <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl flex items-start gap-2 text-xs text-amber-900">
                 <Lock className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
                 <div>
-                  <strong className="block font-bold">Akses Kandang Terisolasi</strong>
+                  <strong className="block font-bold">Akses Per-Cabang Terkunci</strong>
                   <span>
-                    Anda bertugas sebagai <strong>{currentUser?.title}</strong> di {currentUser?.branchName}. Data yang ditampilkan otomatis terkunci pada unit kandang binaan Anda.
+                    Anda login sebagai <strong>{currentUser?.name}</strong> ({currentUser?.title}). Data yang ditampilkan terkunci khusus untuk seluruh unit kandang di {currentUser?.branchName}.
                   </span>
                 </div>
               </div>
 
-              <div className="space-y-1.5">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
-                  Kandang yang Anda Awasi
-                </span>
-                {currentUser?.assignedCages.map((cageName, idx) => (
-                  <div
-                    key={idx}
-                    className="p-3 bg-white border border-slate-200 rounded-xl flex items-center justify-between text-xs"
-                  >
-                    <div className="flex items-center gap-2">
-                      <Warehouse className="w-4 h-4 text-amber-600 shrink-0" />
-                      <strong className="text-slate-800">{cageName}</strong>
-                    </div>
-                    <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">
-                      Aktif
-                    </span>
+              <div className="p-3 bg-white border border-slate-200 rounded-xl flex items-center justify-between text-xs">
+                <div className="flex items-center gap-2">
+                  <Warehouse className="w-4 h-4 text-amber-600 shrink-0" />
+                  <div>
+                    <strong className="text-slate-800 block font-bold">{currentUser?.branchName}</strong>
+                    <span className="text-[11px] text-slate-500">Semua unit kandang di cabang ini</span>
                   </div>
-                ))}
+                </div>
+                <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">
+                  Aktif
+                </span>
               </div>
             </div>
           ) : (
@@ -330,14 +333,24 @@ export function AppHeader({
           <div className="space-y-2 text-xs">
             <div className="p-3 bg-slate-50 rounded-xl space-y-1">
               <span className="text-slate-400 block text-[10px] uppercase font-bold">
-                Unit Kandang Ditugaskan
+                Wilayah Cabang Penugasan
               </span>
               <strong className="text-slate-800 block text-xs">
-                {currentUser?.assignedCages.includes('all')
-                  ? 'Seluruh Unit Kandang (70 Unit)'
-                  : currentUser?.assignedCages.join(', ')}
+                {currentUser?.branchName}
               </strong>
             </div>
+
+            <Link
+              href="/log"
+              onClick={() => setShowProfileModal(false)}
+              className="w-full p-3 rounded-xl bg-sky-50 hover:bg-sky-100 text-[#0284c7] font-bold text-xs flex items-center justify-between transition-colors"
+            >
+              <div className="flex items-center gap-2">
+                <History className="w-4 h-4" />
+                <span>Lihat Riwayat & Log Aktivitas</span>
+              </div>
+              <span>&rarr;</span>
+            </Link>
           </div>
 
           <div className="pt-2 flex flex-col gap-2">

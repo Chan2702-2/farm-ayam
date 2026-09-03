@@ -112,7 +112,7 @@ export default function LoginPage() {
                   type="text"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  placeholder="Contoh: indra, sandi, admin"
+                  placeholder="Contoh: pengawas_a, pengawas_b, admin"
                   className="w-full h-11 pl-10 pr-4 rounded-xl bg-slate-50 border border-slate-200 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-[#0284c7] focus:bg-white transition-all font-medium"
                   required
                 />
@@ -218,7 +218,7 @@ export default function LoginPage() {
         <div className="p-3 bg-sky-50/60 rounded-2xl border border-sky-100 text-[11px] text-slate-600 flex items-start gap-2">
           <Warehouse className="w-4 h-4 text-[#0284c7] shrink-0 mt-0.5" />
           <p>
-            <strong>Hak Akses Terisolasi:</strong> Pengawas kandang hanya dapat melihat, menginput, dan menganalisis unit kandang binaannya masing-masing demi privasi dan integritas data lapangan.
+            <strong>Hak Akses Per Cabang:</strong> Pengawas hanya dapat melihat, menginput, dan menganalisis seluruh data kandang di cabang binaannya (Pengawas A untuk Cabang 3 Alur, Pengawas B untuk Cabang Balai Rupih). Super Admin memiliki akses penuh ke seluruh cabang.
           </p>
         </div>
       </div>

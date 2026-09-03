@@ -16,6 +16,7 @@ import {
 } from '@/lib/data/farm-data';
 import { Modal } from '@/components/ui/Modal';
 import { getCurrentUser, filterCagesForUser } from '@/lib/data/auth-users';
+import { addActivityLog } from '@/lib/data/activity-log';
 import { EggStepper, EggDefectInput, HenDayActDonut } from '@/components/produksi';
 
 export default function InputProduksiPage() {
@@ -110,6 +111,18 @@ export default function InputProduksiPage() {
 
     setCages(updatedCages);
     saveFarmCages(updatedCages);
+
+    const user = getCurrentUser();
+    addActivityLog({
+      userName: user?.name || 'Pengawas Lapangan',
+      userRole: user?.role || 'PENGAWAS',
+      branchId: selectedCage?.branchId || 'branch-1',
+      branchName: selectedCage?.branchName || 'Cabang',
+      actionType: 'PRODUKSI',
+      title: `Input Panen ${selectedCage?.name || 'Kandang'}`,
+      description: `Mencatat panen Pagi ${pagiIkat * 30} butir & Sore ${soreIkat * 30} butir. Total: ${totalProduksi.toLocaleString('id-ID')} butir (Hen-Day ACT: ${actPercent}%).`,
+    });
+
     setShowConfirmModal(false);
     setShowToast(true);
 

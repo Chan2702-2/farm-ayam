@@ -51,7 +51,6 @@ export async function POST(request: NextRequest) {
         title: user.title,
         branchId: user.branchId,
         branchName: user.branchName,
-        assignedCages: user.assignedCages,
         avatarInitial: user.avatarInitial,
       },
     });
