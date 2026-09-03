@@ -18,6 +18,7 @@ import {
   ArrowLeftRight,
   Syringe,
   Layers,
+  Wheat,
   Check,
   CheckCircle2
 } from 'lucide-react';
@@ -256,23 +257,33 @@ export default function DashboardPage() {
           </button>
         </div>
 
-        {/* 4 Core Touch Cards */}
-        <div className="grid grid-cols-4 gap-2">
+        {/* 5 Core Touch Cards */}
+        <div className="grid grid-cols-5 gap-1.5 sm:gap-2">
           <Link
             href="/produksi/input"
-            className="flex flex-col items-center justify-center py-3 px-1 rounded-2xl bg-white border border-slate-100 shadow-xs hover:border-sky-200 active:scale-95 transition-all text-center"
+            className="flex flex-col items-center justify-center py-2.5 px-1 rounded-2xl bg-white border border-slate-100 shadow-xs hover:border-sky-200 active:scale-95 transition-all text-center"
           >
-            <div className="w-9 h-9 rounded-xl bg-[#0284c7] text-white flex items-center justify-center shadow-xs">
+            <div className="w-8 h-8 rounded-xl bg-[#0284c7] text-white flex items-center justify-center shadow-xs">
               <Plus className="w-4 h-4" />
             </div>
-            <span className="text-[10px] font-bold text-slate-800 mt-1.5 tracking-tight">Input Prod</span>
+            <span className="text-[10px] font-bold text-slate-800 mt-1.5 tracking-tight">Input Telur</span>
+          </Link>
+
+          <Link
+            href="/pakan"
+            className="flex flex-col items-center justify-center py-2.5 px-1 rounded-2xl bg-white border border-slate-100 shadow-xs hover:border-amber-200 active:scale-95 transition-all text-center"
+          >
+            <div className="w-8 h-8 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center">
+              <Wheat className="w-4 h-4" />
+            </div>
+            <span className="text-[10px] font-bold text-slate-800 mt-1.5 tracking-tight">Pakan</span>
           </Link>
 
           <Link
             href="/populasi/kematian"
-            className="flex flex-col items-center justify-center py-3 px-1 rounded-2xl bg-white border border-slate-100 shadow-xs hover:border-red-200 active:scale-95 transition-all text-center"
+            className="flex flex-col items-center justify-center py-2.5 px-1 rounded-2xl bg-white border border-slate-100 shadow-xs hover:border-red-200 active:scale-95 transition-all text-center"
           >
-            <div className="w-9 h-9 rounded-xl bg-red-50 text-red-600 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-xl bg-red-50 text-red-600 flex items-center justify-center">
               <HeartCrack className="w-4 h-4" />
             </div>
             <span className="text-[10px] font-bold text-slate-800 mt-1.5 tracking-tight">Mortalitas</span>
@@ -280,9 +291,9 @@ export default function DashboardPage() {
 
           <Link
             href="/berat"
-            className="flex flex-col items-center justify-center py-3 px-1 rounded-2xl bg-white border border-slate-100 shadow-xs hover:border-sky-200 active:scale-95 transition-all text-center"
+            className="flex flex-col items-center justify-center py-2.5 px-1 rounded-2xl bg-white border border-slate-100 shadow-xs hover:border-sky-200 active:scale-95 transition-all text-center"
           >
-            <div className="w-9 h-9 rounded-xl bg-sky-50 text-sky-700 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-xl bg-sky-50 text-sky-700 flex items-center justify-center">
               <Scale className="w-4 h-4" />
             </div>
             <span className="text-[10px] font-bold text-slate-800 mt-1.5 tracking-tight">Timbang</span>
@@ -290,12 +301,12 @@ export default function DashboardPage() {
 
           <Link
             href="/perlakuan"
-            className="flex flex-col items-center justify-center py-3 px-1 rounded-2xl bg-white border border-slate-100 shadow-xs hover:border-emerald-200 active:scale-95 transition-all text-center"
+            className="flex flex-col items-center justify-center py-2.5 px-1 rounded-2xl bg-white border border-slate-100 shadow-xs hover:border-emerald-200 active:scale-95 transition-all text-center"
           >
-            <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center">
               <Syringe className="w-4 h-4" />
             </div>
-            <span className="text-[10px] font-bold text-slate-800 mt-1.5 tracking-tight">Obat/Vaksin</span>
+            <span className="text-[10px] font-bold text-slate-800 mt-1.5 tracking-tight">Vaksin</span>
           </Link>
         </div>
 

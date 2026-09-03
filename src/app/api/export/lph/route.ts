@@ -10,6 +10,7 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const dateParam = searchParams.get('date') || '2026-09-03';
+    const branchParam = (searchParams.get('branch') || '3-alur').toLowerCase();
 
     // Format Indonesian Date string e.g. KAMIS, 3 SEPTEMBER 2026
     const dateObj = new Date(dateParam + 'T00:00:00');
@@ -22,10 +23,20 @@ export async function GET(request: NextRequest) {
     const dateNum = dateObj.getDate();
     const monthStr = monthNames[dateObj.getMonth()];
     const yearNum = dateObj.getFullYear();
-    const dateTitle = `${dayStr}, ${dateNum} ${monthStr} ${yearNum} (3 ALUR)`;
 
-    // Statically scoped to project docs folder
-    const templatePath = path.join(process.cwd(), 'docs', 'LPH 3 ALUR 3-9-26.xlsx');
+    // Select authentic file based on branch
+    let templateFile = 'LPH 3 ALUR 3-9-26.xlsx';
+    let branchLabel = '3 ALUR';
+
+    if (branchParam.includes('rupi') || branchParam === 'branch-2') {
+      templateFile = 'LPH B RUPI 3-9-26.xlsx';
+      branchLabel = 'BALAI RUPIH';
+    } else if (branchParam.includes('rosam') || branchParam === 'branch-3') {
+      templateFile = 'LPH ROSAM 3-9-26.xlsx';
+      branchLabel = 'ROSAM';
+    }
+
+    const templatePath = path.join(process.cwd(), 'docs', templateFile);
 
     let hasTemplate = false;
     try {
@@ -37,13 +48,17 @@ export async function GET(request: NextRequest) {
     }
 
     const workbook = new ExcelJS.Workbook();
+    const dateTitle = `${dayStr}, ${dateNum} ${monthStr} ${yearNum} (${branchLabel})`;
 
     if (hasTemplate) {
       await workbook.xlsx.readFile(templatePath);
       const worksheet = workbook.worksheets[0];
 
       // Update Title Date
-      worksheet.getCell('A3').value = `HARI/TANGGAL : ${dateTitle}`;
+      const cellA3 = worksheet.getCell('A3');
+      if (cellA3.value) {
+        cellA3.value = `HARI/TANGGAL : ${dateTitle}`;
+      }
 
       // Update sheet name
       const sheetDateName = `${dateNum}-${dateObj.getMonth() + 1}`;
@@ -105,7 +120,7 @@ export async function GET(request: NextRequest) {
       status: 200,
       headers: {
         'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        'Content-Disposition': `attachment; filename="LPH_Yuki_Farm_${dateParam}.xlsx"`,
+        'Content-Disposition': `attachment; filename="LPH_${branchLabel.replace(/\s+/g, '_')}_${dateParam}.xlsx"`,
         'Cache-Control': 'no-store',
       },
     });
