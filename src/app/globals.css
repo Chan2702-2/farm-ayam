@@ -1,26 +1,216 @@
 @import "tailwindcss";
 
+
+@custom-variant dark (&:is(.dark *));
+
+/* ============================================================
+   NORDIC CERULEAN AGRO — Design Tokens
+   ============================================================ */
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Surface */
+  --surface: #faf8ff;
+  --surface-dim: #d2d9f4;
+  --surface-bright: #faf8ff;
+  --surface-container-lowest: #ffffff;
+  --surface-container-low: #f2f3ff;
+  --surface-container: #eaedff;
+  --surface-container-high: #e2e7ff;
+  --surface-container-highest: #dae2fd;
+
+  /* On Surface */
+  --on-surface: #131b2e;
+  --on-surface-variant: #3f4850;
+  --inverse-surface: #283044;
+  --inverse-on-surface: #eef0ff;
+
+  /* Outline */
+  --outline: #707881;
+  --outline-variant: #bfc7d2;
+
+  /* Primary (Sky Blue / Cerulean) */
+  --primary: #006194;
+  --on-primary: #ffffff;
+  --primary-container: #007bb9;
+  --on-primary-container: #fdfcff;
+  --inverse-primary: #93ccff;
+  --surface-tint: #006398;
+
+  /* Secondary */
+  --secondary: #006399;
+  --on-secondary: #ffffff;
+  --secondary-container: #7bc2ff;
+  --on-secondary-container: #004f7b;
+
+  /* Tertiary */
+  --tertiary: #4e5e68;
+  --on-tertiary: #ffffff;
+  --tertiary-container: #667781;
+  --on-tertiary-container: #fbfcff;
+
+  /* Error / Mortality */
+  --error: #ba1a1a;
+  --on-error: #ffffff;
+  --error-container: #ffdad6;
+  --on-error-container: #93000a;
+
+  /* Semantic */
+  --success: #0284c7;
+  --warning: #ea580c;
+  --critical: #dc2626;
+  --info: #0369a1;
+
+  /* Background */
+  --background: #faf8ff;
+  --on-background: #131b2e;
+
+  /* Radius */
+  --radius-sm: 0.25rem;
+  --radius: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
+  --radius-full: 9999px;
+
+  /* shadcn compat */
+  --card: var(--surface-container-lowest);
+  --card-foreground: var(--on-surface);
+  --popover: var(--surface-container-lowest);
+  --popover-foreground: var(--on-surface);
+  --muted: var(--surface-container);
+  --muted-foreground: var(--on-surface-variant);
+  --accent: var(--surface-container-high);
+  --accent-foreground: var(--on-surface);
+  --destructive: var(--error);
+  --border: var(--outline-variant);
+  --input: var(--outline-variant);
+  --ring: var(--primary);
+  --foreground: var(--on-surface);
 }
 
 @theme inline {
+  /* Font */
+  --font-jakarta: var(--font-jakarta);
+  --font-sans: var(--font-jakarta);
+
+  /* Colors */
+  --color-surface: var(--surface);
+  --color-surface-dim: var(--surface-dim);
+  --color-surface-container-lowest: var(--surface-container-lowest);
+  --color-surface-container-low: var(--surface-container-low);
+  --color-surface-container: var(--surface-container);
+  --color-surface-container-high: var(--surface-container-high);
+  --color-surface-container-highest: var(--surface-container-highest);
+  --color-on-surface: var(--on-surface);
+  --color-on-surface-variant: var(--on-surface-variant);
+  --color-outline: var(--outline);
+  --color-outline-variant: var(--outline-variant);
+
+  --color-primary: var(--primary);
+  --color-on-primary: var(--on-primary);
+  --color-primary-container: var(--primary-container);
+  --color-on-primary-container: var(--on-primary-container);
+  --color-inverse-primary: var(--inverse-primary);
+
+  --color-secondary: var(--secondary);
+  --color-on-secondary: var(--on-secondary);
+  --color-secondary-container: var(--secondary-container);
+
+  --color-tertiary: var(--tertiary);
+  --color-tertiary-container: var(--tertiary-container);
+  --color-on-tertiary-container: var(--on-tertiary-container);
+
+  --color-error: var(--error);
+  --color-on-error: var(--on-error);
+  --color-error-container: var(--error-container);
+
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-critical: var(--critical);
+  --color-info: var(--info);
+
   --color-background: var(--background);
+  --color-on-background: var(--on-background);
+
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+
+  /* Radius */
+  --radius-sm: var(--radius-sm);
+  --radius: var(--radius);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+  --radius-xl: var(--radius-xl);
+  --radius-full: var(--radius-full);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* ============================================================
+   BASE STYLES
+   ============================================================ */
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-tap-highlight-color: transparent;
 }
 
 body {
+  font-family: var(--font-jakarta), system-ui, sans-serif;
+  font-feature-settings: 'tnum' 1;
   background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  color: var(--on-surface);
+}
+
+/* Tabular nums for all numbers — metric visibility */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Card shadow — Nordic ambient cerulean underglow */
+.card-shadow {
+  box-shadow:
+    0 4px 20px -2px rgba(2, 132, 199, 0.06),
+    0 2px 6px -1px rgba(15, 23, 42, 0.04);
+}
+
+.card-shadow-raised {
+  box-shadow:
+    0 10px 25px -4px rgba(3, 105, 161, 0.12),
+    0 4px 10px -2px rgba(15, 23, 42, 0.04);
+}
+
+/* Safe area for PWA bottom navigation */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 1rem);
+}
+
+/* Mobile scroll lock when modal is open */
+.scroll-lock {
+  overflow: hidden;
+}
+
+@layer utilities {
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  .touch-min { min-height: 48px; min-width: 48px; }
+  .bg-background-base { background-color: #F0F6FA; }
+  .bg-surface-card { background-color: #FFFFFF; }
+  .text-metric-danger { color: #DC2626; }
+  .bg-metric-danger { background-color: #DC2626; }
+  .text-metric-amber { color: #F59E0B; }
+  .bg-metric-amber { background-color: #F59E0B; }
+  .text-metric-success { color: #0284c7; }
 }
