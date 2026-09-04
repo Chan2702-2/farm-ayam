@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import { Plus_Jakarta_Sans } from 'next/font/google'
 import './globals.css'
+import { InstallPrompt } from '@/components/pwa/InstallPrompt'
 
 const plusJakartaSans = Plus_Jakarta_Sans({
   subsets: ['latin'],
@@ -41,6 +42,7 @@ export default function RootLayout({
     <html lang="id" className={`${plusJakartaSans.variable}`}>
       <body className="font-jakarta antialiased bg-surface text-on-surface min-h-screen">
         {children}
+        <InstallPrompt />
       </body>
     </html>
   )

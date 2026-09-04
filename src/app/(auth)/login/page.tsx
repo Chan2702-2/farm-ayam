@@ -151,7 +151,7 @@ export default function LoginPage() {
           <form onSubmit={handleFormSubmit} className="space-y-3">
             <div>
               <label className="text-xs font-bold text-slate-700 block mb-1">
-                Username / ID Pengawas
+                Username / Email Akun
               </label>
               <div className="relative">
                 <User className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
@@ -159,7 +159,7 @@ export default function LoginPage() {
                   type="text"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  placeholder="Contoh: pengawas_a, pengawas_b, admin"
+                  placeholder="Contoh: mulia@farm.com"
                   className="w-full h-11 pl-10 pr-4 rounded-xl bg-slate-50 border border-slate-200 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-[#0284c7] focus:bg-white transition-all font-medium"
                   required
                 />
@@ -201,72 +201,10 @@ export default function LoginPage() {
                   <span>Memverifikasi Akses...</span>
                 </>
               ) : (
-                <span>Masuk Sekarang</span>
+                <span>Masuk</span>
               )}
             </button>
           </form>
-
-          {/* Quick Demo Accounts Selection */}
-          <div className="pt-2 border-t border-slate-100 space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
-                Pilih Akun Cepat (Pengawas Lapangan)
-              </span>
-              <span className="text-[10px] text-sky-600 font-semibold">1-Klik Masuk</span>
-            </div>
-
-            <div className="space-y-1.5 max-h-56 overflow-y-auto no-scrollbar pr-0.5">
-              {initialUsers.slice(0, 6).map((u) => {
-                const isAdmin = u.role === 'ADMIN';
-                return (
-                  <button
-                    key={u.id}
-                    type="button"
-                    onClick={() => performLogin(u)}
-                    className={`w-full p-2.5 rounded-xl border text-left flex items-center justify-between transition-all hover:scale-[1.01] active:scale-95 ${
-                      isAdmin
-                        ? 'bg-sky-50/70 border-sky-200 hover:bg-sky-100/80'
-                        : 'bg-slate-50/70 border-slate-200/70 hover:bg-amber-50/50 hover:border-amber-200'
-                    }`}
-                  >
-                    <div className="min-w-0 pr-2">
-                      <div className="flex items-center gap-1.5">
-                        <span className="font-bold text-xs text-slate-900">
-                          {u.name}
-                        </span>
-                        <span
-                          className={`text-[9px] font-extrabold px-1.5 py-0.2 rounded-full ${
-                            isAdmin
-                              ? 'bg-[#0284c7] text-white'
-                              : 'bg-amber-100 text-amber-800'
-                          }`}
-                        >
-                          {isAdmin ? 'ADMIN' : 'PENGAWAS'}
-                        </span>
-                      </div>
-                      <span className="text-[11px] text-slate-500 block truncate">
-                        {u.title} &bull; {u.branchName}
-                      </span>
-                    </div>
-
-                    <div className="text-right shrink-0">
-                      <span className="text-[10px] font-mono text-slate-400 block">
-                        ID: {u.username}
-                      </span>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-
-        {/* Security Notice */}
-        <div className="p-3 bg-sky-50/60 rounded-2xl border border-sky-100 text-[11px] text-slate-600 flex items-start gap-2">
-          <Warehouse className="w-4 h-4 text-[#0284c7] shrink-0 mt-0.5" />
-          <p>
-            <strong>Hak Akses Per Cabang:</strong> Pengawas hanya dapat melihat, menginput, dan menganalisis seluruh data kandang di cabang binaannya (Pengawas A untuk Cabang 3 Alur, Pengawas B untuk Cabang Balai Rupih). Super Admin memiliki akses penuh ke seluruh cabang.
-          </p>
         </div>
       </div>
     </div>

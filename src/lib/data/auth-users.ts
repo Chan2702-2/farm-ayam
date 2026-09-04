@@ -19,7 +19,21 @@ export interface AuthUser {
 }
 
 export const initialUsers: AuthUser[] = [
-  // 1. SUPER ADMIN / MANAGER
+  // 1. SUPER ADMIN (Owner / Manager Utama)
+  {
+    id: 'user-mulia',
+    username: 'mulia@farm.com',
+    email: 'mulia@farm.com',
+    passwordHash: '123',
+    name: 'Mulia',
+    role: 'ADMIN',
+    title: 'Manager Seluruh Cabang',
+    branchId: 'all',
+    branchName: 'Semua Cabang Peternakan',
+    avatarInitial: 'M',
+  },
+
+  // 2. ADMIN PUSAT BACKUP
   {
     id: 'user-admin',
     username: 'admin',
@@ -33,7 +47,7 @@ export const initialUsers: AuthUser[] = [
     avatarInitial: 'AP',
   },
 
-  // 2. PENGAWAS A - CABANG 3 ALUR
+  // 3. PENGAWAS A - CABANG 3 ALUR
   {
     id: 'user-pengawas-a',
     username: 'pengawas_a',
@@ -47,7 +61,7 @@ export const initialUsers: AuthUser[] = [
     avatarInitial: 'PA',
   },
 
-  // 3. PENGAWAS B - CABANG BALAI RUPIH
+  // 4. PENGAWAS B - CABANG BALAI RUPIH
   {
     id: 'user-pengawas-b',
     username: 'pengawas_b',
@@ -61,7 +75,7 @@ export const initialUsers: AuthUser[] = [
     avatarInitial: 'PB',
   },
 
-  // 4. PENGAWAS C - CABANG ROSAM
+  // 5. PENGAWAS C - CABANG ROSAM
   {
     id: 'user-pengawas-c',
     username: 'pengawas_c',
@@ -76,7 +90,7 @@ export const initialUsers: AuthUser[] = [
   },
 ];
 
-const USERS_STORAGE_KEY = 'yuki_auth_users_list_v2';
+const USERS_STORAGE_KEY = 'yuki_auth_users_list_v3';
 
 export function getAuthUsers(): AuthUser[] {
   if (typeof window === 'undefined') return initialUsers;
@@ -87,7 +101,14 @@ export function getAuthUsers(): AuthUser[] {
   }
   try {
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) && parsed.length > 0 ? parsed : initialUsers;
+    if (Array.isArray(parsed) && parsed.length > 0) {
+      if (!parsed.some((u) => u.email === 'mulia@farm.com' || u.username === 'mulia@farm.com')) {
+        parsed.unshift(initialUsers[0]);
+        localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(parsed));
+      }
+      return parsed;
+    }
+    return initialUsers;
   } catch {
     return initialUsers;
   }
