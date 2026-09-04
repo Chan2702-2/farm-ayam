@@ -30,7 +30,7 @@ export default function PakanOverviewPage() {
   const [feedItems, setFeedItems] = useState<FeedDistributionItem[]>([]);
   const [search, setSearch] = useState('');
   const [exporting, setExporting] = useState(false);
-  const [selectedDate, setSelectedDate] = useState('2026-09-03');
+  const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().split('T')[0]);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
@@ -156,9 +156,9 @@ export default function PakanOverviewPage() {
                 : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
             }`}
           >
-            Semua Cabang (52 Kandang)
+            Semua Cabang ({branches.length} Cabang)
           </button>
-          {branches.slice(0, 3).map((b) => (
+          {branches.map((b) => (
             <button
               key={b.id}
               onClick={() => handleSelectBranch(b.id)}
@@ -168,7 +168,7 @@ export default function PakanOverviewPage() {
                   : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
               }`}
             >
-              {b.shortName} ({b.totalCages})
+              {b.shortName || b.name} ({b.totalCages || 0})
             </button>
           ))}
         </div>
@@ -252,11 +252,30 @@ export default function PakanOverviewPage() {
           </button>
         </div>
 
-        {/* Modular Feed Distribution Table */}
-        <FeedDistributionTable
-          items={filteredItems}
-          summary={summary}
-        />
+        {/* Modular Feed Distribution Table or Empty State */}
+        {filteredItems.length === 0 ? (
+          <div className="p-8 text-center bg-slate-50 rounded-2xl border border-dashed border-amber-200 space-y-3">
+            <div className="w-10 h-10 mx-auto rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center">
+              <Wheat className="w-5 h-5" />
+            </div>
+            <p className="text-xs font-bold text-slate-700">Belum ada data alokasi pakan</p>
+            <p className="text-[11px] text-slate-400 max-w-xs mx-auto">
+              Lakukan input pembagian pakan harian untuk unit kandang di cabang ini.
+            </p>
+            <Link
+              href={`/pakan/input${activeBranch !== 'all' ? `?branch=${activeBranch}` : ''}`}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold transition-all shadow-xs"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Input Pakan Sekarang</span>
+            </Link>
+          </div>
+        ) : (
+          <FeedDistributionTable
+            items={filteredItems}
+            summary={summary}
+          />
+        )}
       </div>
 
       {/* Toast Notification */}

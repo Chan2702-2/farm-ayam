@@ -45,6 +45,18 @@ export default function DashboardPage() {
   const [showBranchModal, setShowBranchModal] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [selectedDate, setSelectedDate] = useState('2026-09-03');
+  const [todayDateFormatted, setTodayDateFormatted] = useState('');
+
+  useEffect(() => {
+    setTodayDateFormatted(
+      new Intl.DateTimeFormat('id-ID', {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+      }).format(new Date())
+    );
+  }, []);
 
   const loadData = () => {
     const user = getCurrentUser();
@@ -122,10 +134,16 @@ export default function DashboardPage() {
         <div className="min-w-0 pr-2">
           <div className="flex items-center gap-1.5 text-[11px] text-slate-500 font-semibold">
             <Calendar className="w-3.5 h-3.5 text-[#0284c7] shrink-0" />
-            <span className="truncate">Kamis, 3 September 2026</span>
+            <span className="truncate">{todayDateFormatted || 'Memuat tanggal...'}</span>
           </div>
           <h1 className="font-jakarta font-extrabold text-lg sm:text-xl text-slate-900 tracking-tight leading-tight truncate mt-0.5">
-            {currentUser?.role === 'PENGAWAS' ? currentUser.branchName : (activeBranchId === 'all' ? 'Dashboard 5 Cabang' : currentBranch?.name)}
+            {currentUser?.role === 'PENGAWAS'
+              ? currentUser.branchName
+              : activeBranchId === 'all'
+              ? branches.length > 0
+                ? `Dashboard ${branches.length} Cabang`
+                : 'Dashboard Peternakan'
+              : currentBranch?.name || 'Cabang Peternakan'}
           </h1>
         </div>
 
@@ -140,7 +158,13 @@ export default function DashboardPage() {
             className="flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-[#e0f2fe] text-[#0369a1] text-[11px] font-bold shadow-xs active:scale-95 transition-all shrink-0"
           >
             <Building2 className="w-3 h-3 text-[#0284c7]" />
-            <span>{activeBranchId === 'all' ? '5 Cabang' : currentBranch?.shortName}</span>
+            <span>
+              {activeBranchId === 'all'
+                ? branches.length > 0
+                  ? `${branches.length} Cabang`
+                  : 'Semua Cabang'
+                : currentBranch?.shortName || 'Cabang'}
+            </span>
           </button>
         )}
       </div>
@@ -389,68 +413,90 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* IF 'ALL' IS SELECTED: SHOW 5 BRANCHES PERFORMANCE CARDS */}
+      {/* IF 'ALL' IS SELECTED: SHOW BRANCHES PERFORMANCE CARDS */}
       {activeBranchId === 'all' && (
         <div className="space-y-2.5">
           <div className="flex items-center justify-between">
-            <h2 className="font-jakarta font-bold text-xs text-slate-800 uppercase tracking-wider">
-              Performa 5 Cabang Peternakan
-            </h2>
-            <span className="text-[10px] text-slate-400 font-medium">Ketuk untuk buka</span>
+            <div className="flex items-center gap-2">
+              <span className="w-1.5 h-4.5 rounded-full bg-[#0284c7] shrink-0" />
+              <h2 className="font-jakarta font-bold text-sm text-slate-900">
+                Performa {branches.length > 0 ? `${branches.length} Cabang Peternakan` : 'Cabang Peternakan'}
+              </h2>
+            </div>
+            {branches.length > 0 && (
+              <span className="text-[10px] text-slate-400 font-medium">Ketuk untuk buka</span>
+            )}
           </div>
 
-          <div className="space-y-2">
-            {branches.map((b) => (
-              <div
-                key={b.id}
-                onClick={() => handleSwitchBranch(b.id)}
-                className="bg-white p-3.5 rounded-2xl border border-slate-100 shadow-xs hover:border-sky-300 active:scale-[0.99] cursor-pointer transition-all flex flex-col gap-2"
-              >
-                {/* Top Row */}
-                <div className="flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <span className="px-2 py-0.5 rounded-lg text-[10px] font-extrabold tracking-wide bg-sky-50 text-[#0284c7] shrink-0">
-                      {b.code}
-                    </span>
-                    <h4 className="font-jakarta font-bold text-sm text-slate-900 truncate">
-                      {b.name}
-                    </h4>
-                    {b.code === '3-ALUR' && (
-                      <span className="px-1.5 py-0.2 rounded-full bg-amber-100 text-amber-800 text-[9px] font-bold shrink-0">
-                        Pusat
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="flex items-center gap-1 text-slate-400 shrink-0">
-                    <span className="text-[11px] text-[#0284c7] font-bold">Buka</span>
-                    <ChevronRight className="w-4 h-4 text-slate-400" />
-                  </div>
-                </div>
-
-                {/* Sub-info Row */}
-                <div className="flex items-center justify-between text-xs text-slate-500 font-medium">
-                  <span className="truncate">{b.location}</span>
-                  <span className="text-slate-700 font-semibold shrink-0 ml-2">{b.totalCages} Kandang</span>
-                </div>
-
-                {/* Bottom Row */}
-                <div className="flex items-center justify-between pt-1.5 border-t border-slate-100 text-xs">
-                  <span className="text-slate-600">
-                    Pop: <strong className="text-slate-800">{b.populasi.toLocaleString('id-ID')}</strong> ekr
-                  </span>
-                  <span className="text-slate-600">
-                    Prod: <strong className="text-[#0369a1]">{b.produksi.toLocaleString('id-ID')}</strong> btr
-                  </span>
-                  <span className={`px-1.5 py-0.2 rounded font-bold text-[10px] ${
-                    b.act >= 95 ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'
-                  }`}>
-                    ACT {b.act}%
-                  </span>
-                </div>
+          {branches.length === 0 ? (
+            <div className="p-5 text-center bg-white rounded-2xl border border-dashed border-sky-200 shadow-xs space-y-2">
+              <div className="w-9 h-9 mx-auto rounded-xl bg-sky-50 text-[#0284c7] flex items-center justify-center">
+                <Building2 className="w-5 h-5" />
               </div>
-            ))}
-          </div>
+              <p className="text-xs font-semibold text-slate-700">Belum ada cabang peternakan</p>
+              <p className="text-[11px] text-slate-400">Tambahkan cabang baru di menu Kandang untuk melihat performa di sini.</p>
+              <Link
+                href="/kandang"
+                className="mt-1 inline-flex items-center gap-1.5 px-3 py-1.5 bg-sky-50 hover:bg-sky-100 text-[#0284c7] rounded-xl text-xs font-bold transition-colors"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>Tambah Cabang</span>
+              </Link>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {branches.map((b) => (
+                <div
+                  key={b.id}
+                  onClick={() => handleSwitchBranch(b.id)}
+                  className="bg-white p-3.5 rounded-2xl border border-slate-100 shadow-xs hover:border-sky-300 active:scale-[0.99] cursor-pointer transition-all flex flex-col gap-2"
+                >
+                  {/* Top Row */}
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="px-2 py-0.5 rounded-lg text-[10px] font-extrabold tracking-wide bg-sky-50 text-[#0284c7] shrink-0">
+                        {b.code}
+                      </span>
+                      <h4 className="font-jakarta font-bold text-sm text-slate-900 truncate">
+                        {b.name}
+                      </h4>
+                      {b.code === '3-ALUR' && (
+                        <span className="px-1.5 py-0.2 rounded-full bg-amber-100 text-amber-800 text-[9px] font-bold shrink-0">
+                          Pusat
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="flex items-center gap-1 text-slate-400 shrink-0">
+                      <span className="text-[11px] text-[#0284c7] font-bold">Buka</span>
+                      <ChevronRight className="w-4 h-4 text-slate-400" />
+                    </div>
+                  </div>
+
+                  {/* Sub-info Row */}
+                  <div className="flex items-center justify-between text-xs text-slate-500 font-medium">
+                    <span className="truncate">{b.location}</span>
+                    <span className="text-slate-700 font-semibold shrink-0 ml-2">{b.totalCages} Kandang</span>
+                  </div>
+
+                  {/* Bottom Row */}
+                  <div className="flex items-center justify-between pt-1.5 border-t border-slate-100 text-xs">
+                    <span className="text-slate-600">
+                      Pop: <strong className="text-slate-800">{b.populasi.toLocaleString('id-ID')}</strong> ekr
+                    </span>
+                    <span className="text-slate-600">
+                      Prod: <strong className="text-[#0369a1]">{b.produksi.toLocaleString('id-ID')}</strong> btr
+                    </span>
+                    <span className={`px-1.5 py-0.2 rounded font-bold text-[10px] ${
+                      b.act >= 95 ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'
+                    }`}>
+                      ACT {b.act}%
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
@@ -458,10 +504,13 @@ export default function DashboardPage() {
       <div className="space-y-2.5">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="font-jakarta font-bold text-sm text-slate-900">
-              Monitoring Kandang ({cages.length} Unit)
-            </h2>
-            <p className="text-[11px] text-slate-500 font-medium">
+            <div className="flex items-center gap-2">
+              <span className="w-1.5 h-4.5 rounded-full bg-[#0284c7] shrink-0" />
+              <h2 className="font-jakarta font-bold text-sm text-slate-900">
+                Monitoring Kandang ({cages.length} Unit)
+              </h2>
+            </div>
+            <p className="text-[11px] text-slate-500 font-medium ml-3.5 mt-0.5">
               {activeBranchId === 'all' ? 'Seluruh Cabang' : currentBranch?.name}
             </p>
           </div>
@@ -556,7 +605,7 @@ export default function DashboardPage() {
                     Semua Cabang (Konsolidasi)
                   </h4>
                   <span className={`text-[10px] ${activeBranchId === 'all' ? 'text-sky-100' : 'text-slate-400'}`}>
-                    5 Cabang &bull; 70 Unit Kandang
+                    {branches.length} Cabang &bull; {cages.length} Unit Kandang
                   </span>
                 </div>
               </div>
@@ -571,12 +620,12 @@ export default function DashboardPage() {
             <div className={`flex items-center justify-between pt-1.5 border-t ${
               activeBranchId === 'all' ? 'border-sky-700/50 text-sky-100' : 'border-slate-100 text-slate-600'
             } text-xs`}>
-              <span>Populasi: <strong className={activeBranchId === 'all' ? 'text-white' : 'text-slate-800'}>177.475</strong> ekor</span>
-              <span>Prod: <strong className={activeBranchId === 'all' ? 'text-white' : 'text-[#0284c7]'}>170.084</strong> btr</span>
+              <span>Populasi: <strong className={activeBranchId === 'all' ? 'text-white' : 'text-slate-800'}>{summary.totalAyam.toLocaleString('id-ID')}</strong> ekor</span>
+              <span>Prod: <strong className={activeBranchId === 'all' ? 'text-white' : 'text-[#0284c7]'}>{summary.totalProduksi.toLocaleString('id-ID')}</strong> btr</span>
               <span className={`px-1.5 py-0.2 rounded font-bold text-[10px] ${
                 activeBranchId === 'all' ? 'bg-white/20 text-white' : 'bg-sky-50 text-[#0284c7]'
               }`}>
-                Avg 92.8%
+                Avg {summary.avgAct}%
               </span>
             </div>
           </button>

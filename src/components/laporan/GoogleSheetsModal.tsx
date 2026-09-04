@@ -12,8 +12,8 @@ import {
   HelpCircle,
 } from 'lucide-react';
 import { Modal } from '@/components/ui/Modal';
-import { FarmCageData, FeedDistributionItem } from '@/lib/data/farm-data';
-import { getCurrentUser } from '@/lib/data/auth-users';
+import { FarmCageData, FeedDistributionItem, getFarmBranches } from '@/lib/data/farm-data';
+import { getCurrentUser, getAuthUsers } from '@/lib/data/auth-users';
 
 interface GoogleSheetsModalProps {
   isOpen: boolean;
@@ -81,11 +81,16 @@ export function GoogleSheetsModal({
 
     try {
       const user = getCurrentUser();
+      const branches = getFarmBranches();
+      const users = getAuthUsers();
+
       const res = await fetch('/api/sheets/sync-all', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          branches,
           cages,
+          users,
           feedItems,
           tanggal: selectedDate,
           userName: user?.name || 'Pengguna Yuki Farm',
@@ -98,15 +103,55 @@ export function GoogleSheetsModal({
       }
 
       setSyncResult(
-        `Berhasil kirim ${data.produksiCount} baris produksi & ${data.pakanCount} baris pakan ke Spreadsheet!`
+        `Sukses kirim ${data.cabangCount || 0} cabang, ${data.kandangCount || 0} kandang, ${data.usersCount || 0} user, ${data.produksiCount || 0} produksi & ${data.pakanCount || 0} pakan ke Spreadsheet!`
       );
       if (onSuccessToast) {
-        onSuccessToast('Data berhasil disinkronisasi ke Google Sheets!');
+        onSuccessToast('Seluruh data berhasil disinkronisasi ke Google Sheets!');
       }
-      // Refresh status agar list sheet/tab terupdate
       checkStatus();
     } catch (e: any) {
       setSyncError(e.message || 'Terjadi kesalahan saat sinkronisasi.');
+    } finally {
+      setSyncing(false);
+    }
+  };
+
+  const handlePushMaster = async () => {
+    if (!status?.connected) return;
+    setSyncing(true);
+    setSyncResult(null);
+    setSyncError(null);
+
+    try {
+      const user = getCurrentUser();
+      const branches = getFarmBranches();
+      const users = getAuthUsers();
+
+      const res = await fetch('/api/sheets/sync-master', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          branches,
+          cages,
+          users,
+          userName: user?.name || 'Pengguna Yuki Farm',
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || 'Gagal sinkronisasi master data ke Google Sheets.');
+      }
+
+      setSyncResult(
+        `Sukses sinkronisasi Master Data: ${data.result?.branchesSynced || 0} cabang, ${data.result?.cagesSynced || 0} kandang, dan ${data.result?.usersSynced || 0} akun pengguna!`
+      );
+      if (onSuccessToast) {
+        onSuccessToast('Master Data (Cabang, Kandang, Pengguna) berhasil disinkronisasi!');
+      }
+      checkStatus();
+    } catch (e: any) {
+      setSyncError(e.message || 'Terjadi kesalahan saat sinkronisasi master data.');
     } finally {
       setSyncing(false);
     }
@@ -172,17 +217,12 @@ export function GoogleSheetsModal({
 
           {status?.connected && status.spreadsheetId && (
             <div className="mt-3 pt-2.5 border-t border-emerald-200/60 dark:border-emerald-800/60 flex items-center justify-between text-[11px]">
-              <span className="truncate max-w-[200px] text-slate-500 dark:text-slate-400">
-                ID: {status.spreadsheetId.slice(0, 14)}...
+              <span className="truncate text-slate-500 dark:text-slate-400">
+                File: <strong className="text-emerald-800 dark:text-emerald-300">{status.title || 'db-farm'}</strong>
               </span>
-              <a
-                href={`https://docs.google.com/spreadsheets/d/${status.spreadsheetId}`}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center gap-1 font-semibold text-emerald-700 dark:text-emerald-400 hover:underline"
-              >
-                Buka File <ExternalLink className="w-3 h-3" />
-              </a>
+              <span className="text-[10px] text-slate-400 font-mono">
+                ID: {status.spreadsheetId.slice(0, 12)}...
+              </span>
             </div>
           )}
         </div>
@@ -260,9 +300,18 @@ export function GoogleSheetsModal({
             ) : (
               <>
                 <UploadCloud className="w-4 h-4" />
-                <span>Kirim Semua Data ({cages.length} Kandang) ke Sheets</span>
+                <span>Kirim Semua Data Harian & Master ke Sheets</span>
               </>
             )}
+          </button>
+
+          <button
+            onClick={handlePushMaster}
+            disabled={!status?.connected || syncing}
+            className="w-full py-2.5 px-4 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 font-semibold text-xs transition-colors flex items-center justify-center gap-2 shadow-2xs disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <Layers className="w-3.5 h-3.5 text-emerald-600" />
+            <span>Sinkronkan Master Data (Cabang, Kandang, Pengguna)</span>
           </button>
 
           <button

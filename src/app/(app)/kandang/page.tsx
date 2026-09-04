@@ -109,9 +109,28 @@ export default function KandangPage() {
     setBranchLocation('');
     setShowAddBranchModal(false);
     setNewBranchId(created.id);
-    setToastMessage(`Cabang "${created.name}" berhasil dibuat!`);
+    setToastMessage(`Cabang "${created.name}" berhasil dibuat & disinkronkan ke Spreadsheet!`);
     setTimeout(() => setToastMessage(null), 3000);
     loadData();
+
+    // Auto-sync to Google Sheets "Master Cabang"
+    fetch('/api/sheets/sync-cabang', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        mode: 'append',
+        branch: {
+          id: created.id,
+          code: created.code,
+          name: created.name,
+          location: created.location,
+          totalCages: 0,
+          totalPopulasi: 0,
+          status: 'Aktif',
+        },
+        userName: currentUser?.name || 'Admin',
+      }),
+    }).catch((err) => console.warn('Sync branch to sheets failed:', err));
   };
 
   const handleAddKandang = (e: React.FormEvent) => {
@@ -168,6 +187,7 @@ export default function KandangPage() {
       totalProduksi: 0,
       actPercent: 0,
       standardPercent: 95.5,
+      tipe: newTipe,
       obat: null,
     };
 
@@ -178,8 +198,33 @@ export default function KandangPage() {
     setShowAddModal(false);
     setNewNama('');
     setNewOperator('');
-    setToastMessage(`Kandang "${newCage.name}" berhasil ditambahkan!`);
+    setToastMessage(`Kandang "${newCage.name}" berhasil ditambahkan & disinkronkan ke Spreadsheet!`);
     setTimeout(() => setToastMessage(null), 3000);
+
+    // Auto-sync to Google Sheets "Master Kandang"
+    fetch('/api/sheets/sync-kandang', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        mode: 'append',
+        cage: {
+          id: newCage.id,
+          branchId: newCage.branchId,
+          branchName: newCage.branchName,
+          name: newCage.name,
+          operator: newCage.operator,
+          jenis: newCage.jenis,
+          tipe: newCage.tipe,
+          kapasitas: newCage.kapasitas,
+          populasiAwal: newCage.populasiAwal,
+          populasiHidup: newCage.populasiHidup,
+          umurMgg: newCage.umurMgg,
+          tanggalMasuk: newCage.tanggalMasuk,
+          status: 'Aktif',
+        },
+        userName: currentUser?.name || 'Admin',
+      }),
+    }).catch((err) => console.warn('Sync cage to sheets failed:', err));
   };
 
   const filteredCages = cages.filter((c) => {

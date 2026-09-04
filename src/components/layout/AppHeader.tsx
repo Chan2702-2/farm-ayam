@@ -15,10 +15,14 @@ import {
   Warehouse,
   Lock,
   History,
-  Trash2
+  Trash2,
+  Users,
+  RefreshCw
 } from 'lucide-react';
 import {
   getFarmBranches,
+  getFarmCages,
+  getFeedDistribution,
   getActiveBranchId,
   setActiveBranchId,
   clearAllFarmData,
@@ -26,10 +30,12 @@ import {
 } from '@/lib/data/farm-data';
 import {
   getCurrentUser,
+  getAuthUsers,
   logoutUser,
   AuthUser
 } from '@/lib/data/auth-users';
 import { Modal } from '@/components/ui/Modal';
+import { UserManagerModal } from '@/components/auth/UserManagerModal';
 
 interface AppHeaderProps {
   title?: string;
@@ -50,6 +56,8 @@ export function AppHeader({
   const [currentUser, setCurrentUserState] = useState<AuthUser | null>(null);
   const [showBranchModal, setShowBranchModal] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
+  const [showUserModal, setShowUserModal] = useState(false);
+  const [isSyncingData, setIsSyncingData] = useState(false);
 
   useEffect(() => {
     setBranches(getFarmBranches());
@@ -90,6 +98,37 @@ export function AppHeader({
     logoutUser();
     setShowProfileModal(false);
     router.push('/login');
+  };
+
+  const handleSyncData = async () => {
+    setIsSyncingData(true);
+    try {
+      const branches = getFarmBranches();
+      const cages = getFarmCages('all');
+      const feedItems = getFeedDistribution('all');
+      const users = getAuthUsers();
+      const res = await fetch('/api/sheets/sync-all', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          branches,
+          cages,
+          users,
+          feedItems,
+          userName: currentUser?.name || 'Admin',
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert(`Sinkronisasi Berhasil!\n${data.cabangCount || 0} cabang, ${data.kandangCount || 0} kandang, dan ${data.usersCount || 0} pengguna telah disinkronkan ke Google Spreadsheet.`);
+      } else {
+        alert('Sinkronisasi Gagal: ' + (data.message || 'Terjadi kesalahan'));
+      }
+    } catch (e: any) {
+      alert('Gagal menghubungi server sinkronisasi: ' + e.message);
+    } finally {
+      setIsSyncingData(false);
+    }
   };
 
   const handleBack = () => {
@@ -256,7 +295,7 @@ export function AppHeader({
                         Semua Cabang (Konsolidasi)
                       </h4>
                       <p className={`text-xs ${activeBranch === 'all' ? 'text-sky-100' : 'text-slate-500'}`}>
-                        Pusat Monitoring 5 Lokasi Farm
+                        {branches.length > 0 ? `Pusat Monitoring ${branches.length} Lokasi Farm` : 'Belum Ada Cabang'}
                       </p>
                     </div>
                   </div>
@@ -355,21 +394,33 @@ export function AppHeader({
               </div>
               <span>&rarr;</span>
             </Link>
+
+            {currentUser?.role === 'ADMIN' && (
+              <button
+                type="button"
+                onClick={() => {
+                  setShowProfileModal(false);
+                  setShowUserModal(true);
+                }}
+                className="w-full p-3 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 font-bold text-xs flex items-center justify-between transition-colors"
+              >
+                <div className="flex items-center gap-2">
+                  <Users className="w-4 h-4 text-amber-700" />
+                  <span>Kelola Akun Pengguna / User (Admin)</span>
+                </div>
+                <span>&rarr;</span>
+              </button>
+            )}
           </div>
 
           <div className="pt-2 flex flex-col gap-2">
             <button
-              onClick={() => {
-                if (confirm('Bersihkan semua data cache browser dan mulai dari 0?')) {
-                  clearAllFarmData();
-                  setShowProfileModal(false);
-                  window.location.reload();
-                }
-              }}
-              className="w-full h-11 rounded-xl bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-700 font-bold text-xs flex items-center justify-center gap-2 transition-all"
+              onClick={handleSyncData}
+              disabled={isSyncingData}
+              className="w-full h-11 rounded-xl bg-sky-50 hover:bg-sky-100 active:scale-95 text-[#0284c7] font-bold text-xs flex items-center justify-center gap-2 transition-all disabled:opacity-50"
             >
-              <Trash2 className="w-4 h-4 text-slate-500" />
-              <span>Bersihkan Cache & Reset Data Nol</span>
+              <RefreshCw className={`w-4 h-4 ${isSyncingData ? 'animate-spin' : ''}`} />
+              <span>{isSyncingData ? 'Menyinkronkan Data...' : 'Sinkronisasi Data'}</span>
             </button>
 
             <button
@@ -377,11 +428,17 @@ export function AppHeader({
               className="w-full h-11 rounded-xl bg-red-50 hover:bg-red-100 active:scale-95 text-red-600 font-bold text-xs flex items-center justify-center gap-2 transition-all"
             >
               <LogOut className="w-4 h-4" />
-              <span>Keluar / Ganti Akun Pengawas</span>
+              <span>Logout</span>
             </button>
           </div>
         </div>
       </Modal>
+
+      {/* User Manager Modal for Admin */}
+      <UserManagerModal
+        isOpen={showUserModal}
+        onClose={() => setShowUserModal(false)}
+      />
     </>
   );
 }

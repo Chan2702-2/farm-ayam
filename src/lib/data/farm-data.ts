@@ -48,6 +48,7 @@ export interface FarmCageData {
   totalProduksi: number;
   actPercent: number;
   standardPercent: number;
+  tipe?: 'KAWAT' | 'KAYU' | string;
   obat?: string | null;
 }
 

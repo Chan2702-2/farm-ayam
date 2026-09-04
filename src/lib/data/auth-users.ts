@@ -76,6 +76,57 @@ export const initialUsers: AuthUser[] = [
   },
 ];
 
+const USERS_STORAGE_KEY = 'yuki_auth_users_list_v2';
+
+export function getAuthUsers(): AuthUser[] {
+  if (typeof window === 'undefined') return initialUsers;
+  const raw = localStorage.getItem(USERS_STORAGE_KEY);
+  if (!raw) {
+    localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(initialUsers));
+    return initialUsers;
+  }
+  try {
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) && parsed.length > 0 ? parsed : initialUsers;
+  } catch {
+    return initialUsers;
+  }
+}
+
+export function saveAuthUsers(users: AuthUser[]): void {
+  if (typeof window !== 'undefined') {
+    localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users));
+    window.dispatchEvent(new Event('usersChange'));
+  }
+}
+
+export function addAuthUser(user: Omit<AuthUser, 'id' | 'avatarInitial'>): AuthUser {
+  const users = getAuthUsers();
+  const initials = user.name
+    .split(' ')
+    .map((n) => n[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2) || 'US';
+
+  const newUser: AuthUser = {
+    ...user,
+    id: `user-${Date.now()}`,
+    avatarInitial: initials,
+  };
+  users.push(newUser);
+  saveAuthUsers(users);
+  return newUser;
+}
+
+export function deleteAuthUser(id: string): boolean {
+  const users = getAuthUsers();
+  if (users.length <= 1) return false;
+  const filtered = users.filter((u) => u.id !== id);
+  saveAuthUsers(filtered);
+  return true;
+}
+
 // Inactivity timeout: 1 Hour (60 minutes * 60 seconds * 1000 ms = 3,600,000 ms)
 export const INACTIVITY_TIMEOUT_MS = 60 * 60 * 1000;
 

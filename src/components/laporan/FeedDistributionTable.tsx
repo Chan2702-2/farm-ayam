@@ -74,6 +74,11 @@ export function FeedDistributionTable({ items, summary }: FeedDistributionTableP
                   <span className="w-1.5 h-1.5 rounded-full bg-amber-600 shrink-0" />
                   <span className="truncate max-w-[180px] font-jakarta">{item.kandang}</span>
                 </div>
+                {item.branchName && (
+                  <span className="text-[10px] text-slate-400 font-medium block truncate ml-3 mt-0.5">
+                    {item.branchName}
+                  </span>
+                )}
               </td>
 
               <td className="py-2.5 px-2.5 text-center border-b border-r border-slate-100">

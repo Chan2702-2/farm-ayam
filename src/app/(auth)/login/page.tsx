@@ -15,7 +15,7 @@ import {
   Warehouse,
   Clock
 } from 'lucide-react';
-import { initialUsers, setCurrentUser, getCurrentUser, AuthUser } from '@/lib/data/auth-users';
+import { initialUsers, getAuthUsers, setCurrentUser, getCurrentUser, AuthUser } from '@/lib/data/auth-users';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -51,6 +51,21 @@ export default function LoginPage() {
       if (userParam) {
         // Quick demo login
         setCurrentUser(userParam);
+        router.push('/dashboard');
+        return;
+      }
+
+      // Check client-side registered users
+      const localUsers = getAuthUsers();
+      const matchedLocal = localUsers.find(
+        (u) =>
+          (u.username.toLowerCase() === username.trim().toLowerCase() ||
+           u.email.toLowerCase() === username.trim().toLowerCase()) &&
+          u.passwordHash === password.trim()
+      );
+
+      if (matchedLocal) {
+        setCurrentUser(matchedLocal);
         router.push('/dashboard');
         return;
       }

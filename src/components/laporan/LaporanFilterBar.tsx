@@ -21,6 +21,20 @@ export function LaporanFilterBar({
   onOpenExport,
   currentBranchName,
 }: LaporanFilterBarProps) {
+  const displayDate = React.useMemo(() => {
+    try {
+      const d = selectedDate ? new Date(selectedDate) : new Date();
+      return new Intl.DateTimeFormat('id-ID', {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+      }).format(d);
+    } catch {
+      return selectedDate || 'Hari Ini';
+    }
+  }, [selectedDate]);
+
   return (
     <div className="space-y-2">
       {/* Branch Tabs - ONLY for Admin with multiple branches */}
@@ -56,7 +70,7 @@ export function LaporanFilterBar({
       <div className="bg-white p-3 rounded-2xl border border-slate-100 shadow-xs flex items-center justify-between">
         <div className="flex items-center gap-2 text-xs font-semibold text-slate-700 min-w-0 pr-2">
           <Calendar className="w-4 h-4 text-[#0284c7] shrink-0" />
-          <span className="truncate">Kamis, 3 September 2026 &bull; {currentBranchName || 'Semua Cabang'}</span>
+          <span className="truncate">{displayDate} &bull; {currentBranchName || 'Semua Cabang'}</span>
         </div>
         <button
           onClick={onOpenExport}

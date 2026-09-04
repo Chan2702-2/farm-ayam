@@ -62,6 +62,47 @@ export interface LogSheetRow {
   description: string;
 }
 
+export interface BranchSheetRow {
+  id: string;
+  code: string;
+  name: string;
+  location?: string;
+  totalCages?: number;
+  totalPopulasi?: number;
+  status?: string;
+  updatedBy?: string;
+}
+
+export interface CageSheetRow {
+  id: string;
+  branchId: string;
+  branchName: string;
+  name: string;
+  operator?: string;
+  jenis?: string;
+  tipe?: string;
+  kapasitas?: number;
+  populasiAwal?: number;
+  populasiHidup?: number;
+  umurMgg?: number;
+  tanggalMasuk?: string;
+  status?: string;
+  updatedBy?: string;
+}
+
+export interface UserSheetRow {
+  id: string;
+  username: string;
+  name: string;
+  role: string;
+  title?: string;
+  branchId: string;
+  branchName: string;
+  email?: string;
+  status?: string;
+  updatedBy?: string;
+}
+
 const PRODUKSI_HEADERS = [
   'Timestamp',
   'Tanggal',
@@ -126,6 +167,50 @@ const LOG_HEADERS = [
   'Tipe Aksi',
   'Judul',
   'Keterangan'
+];
+
+export const CABANG_HEADERS = [
+  'Timestamp Update',
+  'ID Cabang',
+  'Kode Cabang',
+  'Nama Cabang',
+  'Lokasi / Alamat',
+  'Total Kandang',
+  'Total Populasi (Ekor)',
+  'Status',
+  'Petugas / Admin'
+];
+
+export const KANDANG_HEADERS = [
+  'Timestamp Update',
+  'ID Kandang',
+  'ID Cabang',
+  'Nama Cabang',
+  'Nama Unit Kandang',
+  'Operator / PJ',
+  'Jenis Ayam',
+  'Konstruksi / Tipe',
+  'Kapasitas (Ekor)',
+  'Populasi Awal',
+  'Populasi Hidup',
+  'Umur (Minggu)',
+  'Tanggal Masuk',
+  'Status',
+  'Petugas / Admin'
+];
+
+export const USER_HEADERS = [
+  'Timestamp Update',
+  'ID User',
+  'Username',
+  'Nama Lengkap',
+  'Role / Hak Akses',
+  'Jabatan',
+  'ID Cabang',
+  'Nama Cabang Penugasan',
+  'Email',
+  'Status Akun',
+  'Petugas / Admin'
 ];
 
 export async function checkGoogleSheetsConnection() {
@@ -360,4 +445,268 @@ export async function readSheetValues(sheetTitle: string, range?: string) {
   });
 
   return response.data.values || [];
+}
+
+/**
+ * MASTER CABANG: Sinkronisasi seluruh cabang peternakan ke tab 'Master Cabang'
+ */
+export async function syncMasterCabang(rows: BranchSheetRow[], userName: string = 'Admin') {
+  const sheetTitle = 'Master Cabang';
+  await ensureSheetExists(sheetTitle, CABANG_HEADERS);
+
+  const sheets = getGoogleSheetsClient();
+  const spreadsheetId = getGoogleSheetId();
+  const nowStr = new Date().toLocaleString('id-ID');
+
+  // Bersihkan data baris sebelumnya (A2:I)
+  await sheets.spreadsheets.values.clear({
+    spreadsheetId,
+    range: `'${sheetTitle}'!A2:I1000`,
+  });
+
+  if (rows.length === 0) return;
+
+  const values = rows.map((b) => [
+    nowStr,
+    b.id,
+    b.code,
+    b.name,
+    b.location || '-',
+    b.totalCages ?? 0,
+    b.totalPopulasi ?? 0,
+    b.status || 'Aktif',
+    b.updatedBy || userName,
+  ]);
+
+  return sheets.spreadsheets.values.update({
+    spreadsheetId,
+    range: `'${sheetTitle}'!A2`,
+    valueInputOption: 'USER_ENTERED',
+    requestBody: {
+      values,
+    },
+  });
+}
+
+export async function appendCabangRow(branch: BranchSheetRow, userName: string = 'Admin') {
+  const sheetTitle = 'Master Cabang';
+  await ensureSheetExists(sheetTitle, CABANG_HEADERS);
+
+  const sheets = getGoogleSheetsClient();
+  const spreadsheetId = getGoogleSheetId();
+  const nowStr = new Date().toLocaleString('id-ID');
+
+  return sheets.spreadsheets.values.append({
+    spreadsheetId,
+    range: `'${sheetTitle}'!A:I`,
+    valueInputOption: 'USER_ENTERED',
+    insertDataOption: 'INSERT_ROWS',
+    requestBody: {
+      values: [
+        [
+          nowStr,
+          branch.id,
+          branch.code,
+          branch.name,
+          branch.location || '-',
+          branch.totalCages ?? 0,
+          branch.totalPopulasi ?? 0,
+          branch.status || 'Aktif',
+          branch.updatedBy || userName,
+        ],
+      ],
+    },
+  });
+}
+
+/**
+ * MASTER KANDANG: Sinkronisasi seluruh data unit kandang ke tab 'Master Kandang'
+ */
+export async function syncMasterKandang(rows: CageSheetRow[], userName: string = 'Admin') {
+  const sheetTitle = 'Master Kandang';
+  await ensureSheetExists(sheetTitle, KANDANG_HEADERS);
+
+  const sheets = getGoogleSheetsClient();
+  const spreadsheetId = getGoogleSheetId();
+  const nowStr = new Date().toLocaleString('id-ID');
+
+  // Bersihkan data baris sebelumnya (A2:O)
+  await sheets.spreadsheets.values.clear({
+    spreadsheetId,
+    range: `'${sheetTitle}'!A2:O2000`,
+  });
+
+  if (rows.length === 0) return;
+
+  const values = rows.map((c) => [
+    nowStr,
+    c.id,
+    c.branchId,
+    c.branchName,
+    c.name,
+    c.operator || '-',
+    c.jenis || 'LAYER LOHMANN',
+    c.tipe || 'KAWAT',
+    c.kapasitas ?? 0,
+    c.populasiAwal ?? 0,
+    c.populasiHidup ?? 0,
+    c.umurMgg ?? 0,
+    c.tanggalMasuk || '-',
+    c.status || 'Aktif',
+    c.updatedBy || userName,
+  ]);
+
+  return sheets.spreadsheets.values.update({
+    spreadsheetId,
+    range: `'${sheetTitle}'!A2`,
+    valueInputOption: 'USER_ENTERED',
+    requestBody: {
+      values,
+    },
+  });
+}
+
+export async function appendKandangRow(cage: CageSheetRow, userName: string = 'Admin') {
+  const sheetTitle = 'Master Kandang';
+  await ensureSheetExists(sheetTitle, KANDANG_HEADERS);
+
+  const sheets = getGoogleSheetsClient();
+  const spreadsheetId = getGoogleSheetId();
+  const nowStr = new Date().toLocaleString('id-ID');
+
+  return sheets.spreadsheets.values.append({
+    spreadsheetId,
+    range: `'${sheetTitle}'!A:O`,
+    valueInputOption: 'USER_ENTERED',
+    insertDataOption: 'INSERT_ROWS',
+    requestBody: {
+      values: [
+        [
+          nowStr,
+          cage.id,
+          cage.branchId,
+          cage.branchName,
+          cage.name,
+          cage.operator || '-',
+          cage.jenis || 'LAYER LOHMANN',
+          cage.tipe || 'KAWAT',
+          cage.kapasitas ?? 0,
+          cage.populasiAwal ?? 0,
+          cage.populasiHidup ?? 0,
+          cage.umurMgg ?? 0,
+          cage.tanggalMasuk || '-',
+          cage.status || 'Aktif',
+          cage.updatedBy || userName,
+        ],
+      ],
+    },
+  });
+}
+
+/**
+ * MASTER PENGGUNA: Sinkronisasi seluruh data user / operator / pengawas ke tab 'Master Pengguna'
+ */
+export async function syncMasterUsers(rows: UserSheetRow[], userName: string = 'Admin') {
+  const sheetTitle = 'Master Pengguna';
+  await ensureSheetExists(sheetTitle, USER_HEADERS);
+
+  const sheets = getGoogleSheetsClient();
+  const spreadsheetId = getGoogleSheetId();
+  const nowStr = new Date().toLocaleString('id-ID');
+
+  // Bersihkan data baris sebelumnya (A2:K)
+  await sheets.spreadsheets.values.clear({
+    spreadsheetId,
+    range: `'${sheetTitle}'!A2:K1000`,
+  });
+
+  if (rows.length === 0) return;
+
+  const values = rows.map((u) => [
+    nowStr,
+    u.id,
+    u.username,
+    u.name,
+    u.role,
+    u.title || '-',
+    u.branchId || 'all',
+    u.branchName || 'Semua Cabang',
+    u.email || '-',
+    u.status || 'Aktif',
+    u.updatedBy || userName,
+  ]);
+
+  return sheets.spreadsheets.values.update({
+    spreadsheetId,
+    range: `'${sheetTitle}'!A2`,
+    valueInputOption: 'USER_ENTERED',
+    requestBody: {
+      values,
+    },
+  });
+}
+
+export async function appendUserRow(user: UserSheetRow, updatedBy: string = 'Admin') {
+  const sheetTitle = 'Master Pengguna';
+  await ensureSheetExists(sheetTitle, USER_HEADERS);
+
+  const sheets = getGoogleSheetsClient();
+  const spreadsheetId = getGoogleSheetId();
+  const nowStr = new Date().toLocaleString('id-ID');
+
+  return sheets.spreadsheets.values.append({
+    spreadsheetId,
+    range: `'${sheetTitle}'!A:K`,
+    valueInputOption: 'USER_ENTERED',
+    insertDataOption: 'INSERT_ROWS',
+    requestBody: {
+      values: [
+        [
+          nowStr,
+          user.id,
+          user.username,
+          user.name,
+          user.role,
+          user.title || '-',
+          user.branchId || 'all',
+          user.branchName || 'Semua Cabang',
+          user.email || '-',
+          user.status || 'Aktif',
+          user.updatedBy || updatedBy,
+        ],
+      ],
+    },
+  });
+}
+
+/**
+ * Sinkronisasi seluruh Master Data (Cabang, Kandang, Pengguna) sekaligus
+ */
+export async function syncAllMasterData(params: {
+  branches?: BranchSheetRow[];
+  cages?: CageSheetRow[];
+  users?: UserSheetRow[];
+  userName?: string;
+}) {
+  const { branches = [], cages = [], users = [], userName = 'Admin' } = params;
+  const results = {
+    branchesSynced: 0,
+    cagesSynced: 0,
+    usersSynced: 0,
+  };
+
+  if (branches.length > 0) {
+    await syncMasterCabang(branches, userName);
+    results.branchesSynced = branches.length;
+  }
+  if (cages.length > 0) {
+    await syncMasterKandang(cages, userName);
+    results.cagesSynced = cages.length;
+  }
+  if (users.length > 0) {
+    await syncMasterUsers(users, userName);
+    results.usersSynced = users.length;
+  }
+
+  return results;
 }
