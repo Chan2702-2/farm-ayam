@@ -10,7 +10,7 @@ export default function PopulasiMutasiPage() {
   const [cages, setCages] = useState<FarmCageData[]>([]);
   const [kandangAsal, setKandangAsal] = useState<FarmCageData | null>(null);
   const [kandangTujuan, setKandangTujuan] = useState<FarmCageData | null>(null);
-  const [jumlah, setJumlah] = useState(20);
+  const [jumlah, setJumlah] = useState(0);
   const [tipeMutasi, setTipeMutasi] = useState<'PINDAH_KANDANG' | 'MASUK_PULLET'>('PINDAH_KANDANG');
   const [catatan, setCatatan] = useState('');
   const [showToast, setShowToast] = useState(false);

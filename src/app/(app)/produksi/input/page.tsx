@@ -28,8 +28,8 @@ export default function InputProduksiPage() {
   const [showToast, setShowToast] = useState(false);
 
   // Form State
-  const [pagiIkat, setPagiIkat] = useState<number>(110);
-  const [soreIkat, setSoreIkat] = useState<number>(10);
+  const [pagiIkat, setPagiIkat] = useState<number>(0);
+  const [soreIkat, setSoreIkat] = useState<number>(0);
   const [butir, setButir] = useState<number>(0);
   const [retak, setRetak] = useState<number>(0);
   const [putih, setPutih] = useState<number>(0);
@@ -59,8 +59,8 @@ export default function InputProduksiPage() {
 
   useEffect(() => {
     if (selectedCage) {
-      setPagiIkat(selectedCage.pagiIkat || 100);
-      setSoreIkat(selectedCage.soreIkat || 15);
+      setPagiIkat(selectedCage.pagiIkat || 0);
+      setSoreIkat(selectedCage.soreIkat || 0);
       setButir(selectedCage.butir || 0);
       setRetak(selectedCage.retak || 0);
       setPutih(selectedCage.putih || 0);

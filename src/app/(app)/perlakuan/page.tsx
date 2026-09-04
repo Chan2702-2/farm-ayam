@@ -14,11 +14,11 @@ export default function PerlakuanPage() {
   const [showToast, setShowToast] = useState(false);
 
   const [kategori, setKategori] = useState<'OBAT' | 'VITAMIN' | 'VAKSIN'>('OBAT');
-  const [namaObat, setNamaObat] = useState('OTRALEC');
-  const [dosis, setDosis] = useState('0.5 ml / Liter air');
-  const [aplikasi, setAplikasi] = useState('Air Minum Utama');
+  const [namaObat, setNamaObat] = useState('');
+  const [dosis, setDosis] = useState('');
+  const [aplikasi, setAplikasi] = useState('Air Minum');
   const [waktu, setWaktu] = useState('Pagi (07:00)');
-  const [petugas, setPetugas] = useState('INDRA YUHADI');
+  const [petugas, setPetugas] = useState('');
 
   useEffect(() => {
     const list = getFarmCages();

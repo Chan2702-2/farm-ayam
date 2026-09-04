@@ -27,9 +27,9 @@ export default function CatatKematianPage() {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showToast, setShowToast] = useState(false);
 
-  const [mati, setMati] = useState(2);
-  const [penyebab, setPenyebab] = useState('Heat Stress / Suhu Tinggi');
-  const [catatan, setCatatan] = useState('Suhu sempat mencapai 31.8C di blok barat.');
+  const [mati, setMati] = useState(0);
+  const [penyebab, setPenyebab] = useState('Penyebab Normal / Alami');
+  const [catatan, setCatatan] = useState('');
   const [afkir, setAfkir] = useState(0);
   const [mutasi, setMutasi] = useState(0);
 

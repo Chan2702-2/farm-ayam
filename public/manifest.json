@@ -1,0 +1,24 @@
+{
+  "name": "Yuki Farm Mobile Production Management",
+  "short_name": "Yuki Farm",
+  "description": "Mobile Production Management System untuk Peternakan Ayam Petelur",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#006194",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

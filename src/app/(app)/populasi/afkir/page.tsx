@@ -13,9 +13,9 @@ export default function PopulasiAfkirPage() {
   const [showCageModal, setShowCageModal] = useState(false);
   const [showToast, setShowToast] = useState(false);
 
-  const [jumlahAfkir, setJumlahAfkir] = useState(5);
+  const [jumlahAfkir, setJumlahAfkir] = useState(0);
   const [alasan, setAlasan] = useState('Kerdil / Stunting');
-  const [beratRata, setBeratRata] = useState('1.65');
+  const [beratRata, setBeratRata] = useState('');
   const [tujuan, setTujuan] = useState('Dijual ke Pengepul');
   const [catatan, setCatatan] = useState('');
 

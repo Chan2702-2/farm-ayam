@@ -19,12 +19,12 @@ export function AuthGuard({ children }: AuthGuardProps) {
   const router = useRouter();
   const pathname = usePathname();
   const [authorized, setAuthorized] = useState<boolean>(false);
-  const lastRecordRef = useRef<number>(Date.now());
+  const lastRecordRef = useRef<number>(0);
 
-  // Throttled activity recorder (at most once every 5 seconds)
+  // Throttled activity recorder (at most once every 30 seconds to prevent lag and excessive storage writes)
   const handleUserActivity = useCallback(() => {
     const now = Date.now();
-    if (now - lastRecordRef.current > 5000) {
+    if (now - lastRecordRef.current > 30000) {
       lastRecordRef.current = now;
       recordUserActivity();
     }
@@ -56,8 +56,8 @@ export function AuthGuard({ children }: AuthGuardProps) {
 
     recordUserActivity();
 
-    // 1. User Interaction Listeners to reset inactivity timer
-    const events = ['mousedown', 'mousemove', 'keydown', 'touchstart', 'scroll', 'click'];
+    // Only listen to discrete user actions (NO mousemove or scroll which cause high CPU/jank)
+    const events = ['click', 'keydown', 'touchstart'];
     events.forEach((evt) => {
       window.addEventListener(evt, handleUserActivity, { passive: true });
     });

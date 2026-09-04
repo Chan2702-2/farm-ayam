@@ -13,9 +13,9 @@ export default function BeratPage() {
   const [showCageModal, setShowCageModal] = useState(false);
   const [showToast, setShowToast] = useState(false);
 
-  const [sampelEkor, setSampelEkor] = useState(100);
-  const [totalBeratKg, setTotalBeratKg] = useState('185.8');
-  const [keseragaman, setKeseragaman] = useState('88');
+  const [sampelEkor, setSampelEkor] = useState(0);
+  const [totalBeratKg, setTotalBeratKg] = useState('');
+  const [keseragaman, setKeseragaman] = useState('');
   const [catatan, setCatatan] = useState('');
 
   useEffect(() => {
