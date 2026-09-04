@@ -42,7 +42,7 @@ export default function LaporanPage() {
   const [activeBranch, setActiveBranch] = useState<string>('all');
   const [cages, setCages] = useState<FarmCageData[]>([]);
   const [feedItems, setFeedItems] = useState<FeedDistributionItem[]>([]);
-  const [selectedDate, setSelectedDate] = useState('2026-09-03');
+  const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().split('T')[0]);
   const [showExportModal, setShowExportModal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
   const [showSheetsModal, setShowSheetsModal] = useState(false);

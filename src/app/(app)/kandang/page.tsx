@@ -25,6 +25,7 @@ import {
 import { KandangCard } from '@/components/kandang/KandangCard';
 import { getCurrentUser, filterCagesForUser, AuthUser } from '@/lib/data/auth-users';
 import { Modal } from '@/components/ui/Modal';
+import { markDataDirty, performAutoSync } from '@/lib/sync/auto-sync';
 
 export default function KandangPage() {
   const [branches, setBranches] = useState<FarmBranch[]>([]);
@@ -111,7 +112,8 @@ export default function KandangPage() {
     setNewBranchId(created.id);
     setToastMessage(`Cabang "${created.name}" berhasil dibuat & disinkronkan ke Spreadsheet!`);
     setTimeout(() => setToastMessage(null), 3000);
-    loadData();
+    markDataDirty();
+    performAutoSync();
 
     // Auto-sync to Google Sheets "Master Cabang"
     fetch('/api/sheets/sync-cabang', {
@@ -199,7 +201,8 @@ export default function KandangPage() {
     setNewNama('');
     setNewOperator('');
     setToastMessage(`Kandang "${newCage.name}" berhasil ditambahkan & disinkronkan ke Spreadsheet!`);
-    setTimeout(() => setToastMessage(null), 3000);
+    markDataDirty();
+    performAutoSync();
 
     // Auto-sync to Google Sheets "Master Kandang"
     fetch('/api/sheets/sync-kandang', {

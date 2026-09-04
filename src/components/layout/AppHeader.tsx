@@ -28,6 +28,7 @@ import {
   clearAllFarmData,
   FarmBranch
 } from '@/lib/data/farm-data';
+import { SyncStatusBadge } from '@/components/common/SyncStatusBadge';
 import {
   getCurrentUser,
   getAuthUsers,
@@ -189,6 +190,9 @@ export function AppHeader({
           </div>
 
           <div className="flex items-center gap-1.5 shrink-0">
+            {/* Real-time Auto-Sync Status & Offline Badge */}
+            <SyncStatusBadge />
+
             {/* Branch Badge / Selector */}
             {isPengawas ? (
               <div

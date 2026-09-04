@@ -5,6 +5,7 @@ export type LogActionType =
   | 'PRODUKSI'
   | 'PAKAN'
   | 'MORTALITAS'
+  | 'MUTASI'
   | 'IMPORT_EXCEL'
   | 'EXPORT_EXCEL'
   | 'LOGIN';
@@ -70,6 +71,7 @@ export function addActivityLog(entry: {
   let badgeColor = 'sky';
   if (entry.actionType === 'PAKAN') badgeColor = 'amber';
   else if (entry.actionType === 'MORTALITAS') badgeColor = 'red';
+  else if (entry.actionType === 'MUTASI') badgeColor = 'purple';
   else if (entry.actionType.includes('EXCEL')) badgeColor = 'emerald';
 
   const newItem: ActivityLogItem = {

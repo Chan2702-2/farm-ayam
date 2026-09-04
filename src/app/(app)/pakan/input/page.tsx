@@ -31,6 +31,7 @@ import {
 import { Modal } from '@/components/ui/Modal';
 import { getCurrentUser, filterCagesForUser, AuthUser } from '@/lib/data/auth-users';
 import { addActivityLog } from '@/lib/data/activity-log';
+import { markDataDirty, performAutoSync, isSyncNeeded, enqueuePendingSync } from '@/lib/sync/auto-sync';
 
 interface BatchRowState {
   cageId: string;
@@ -117,6 +118,13 @@ export default function InputPakanPage() {
       }
     }
     setSelectedCageId(initialCage);
+
+    return () => {
+      // Skema: saat keluar dari menu input & jika online, lakukan sinkron otomatis
+      if (typeof window !== 'undefined' && navigator.onLine && isSyncNeeded()) {
+        performAutoSync();
+      }
+    };
   }, []);
 
   // Filter cages for currently selected branch
@@ -242,27 +250,48 @@ export default function InputPakanPage() {
         description: `Alokasi ${kirimSak} sak (${kirimKg} kg) pakan ${jenisPakan} untuk ${populasi.toLocaleString('id-ID')} ekor ayam di ${selectedCage.branchName}.`,
       });
 
-      // Background sync to Google Sheets "Distribusi Pakan"
-      fetch('/api/sheets/sync-pakan', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          row: {
-            tanggal,
-            branchId: selectedCage.branchId,
-            branchName: selectedCage.branchName,
-            cageId: selectedCage.id,
-            cageName: selectedCage.name,
-            populasi,
-            jenisPakan,
-            jumlahPakanKg,
-            kirimKg,
-            kirimSak,
-            konsumsiGrPerEkor: konsumsiGr,
-            userName: currentUser?.name || 'Pengawas Lapangan',
-          },
-        }),
-      }).catch((err) => console.warn('Background sync to Google Sheets:', err));
+      const pakanRow = {
+        tanggal,
+        branchId: selectedCage.branchId,
+        branchName: selectedCage.branchName,
+        cageId: selectedCage.id,
+        cageName: selectedCage.name,
+        populasi,
+        jenisPakan,
+        jumlahPakanKg,
+        kirimKg,
+        kirimSak,
+        konsumsiGrPerEkor: konsumsiGr,
+        userName: currentUser?.name || 'Pengawas Lapangan',
+      };
+
+      // Tandai data telah berubah secara lokal
+      markDataDirty();
+
+      if (!navigator.onLine) {
+        enqueuePendingSync({
+          type: 'pakan',
+          url: '/api/sheets/sync-pakan',
+          payload: { row: pakanRow },
+        });
+        console.log('[Offline] Data alokasi pakan disimpan di antrean HP.');
+      } else {
+        // Background sync to Google Sheets "Distribusi Pakan"
+        fetch('/api/sheets/sync-pakan', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ row: pakanRow }),
+        })
+          .then(() => performAutoSync())
+          .catch((err) => {
+            console.warn('Background sync pakan ke Google Sheets gagal, diantrekan:', err);
+            enqueuePendingSync({
+              type: 'pakan',
+              url: '/api/sheets/sync-pakan',
+              payload: { row: pakanRow },
+            });
+          });
+      }
 
       setShowConfirmModal(false);
       setToastMessage(`Alokasi Pakan ${selectedCage.name} (${selectedCage.branchName}) berhasil disimpan!`);
@@ -325,27 +354,50 @@ export default function InputPakanPage() {
         description: `Menyimpan pakan untuk ${newItems.length} unit kandang (${batchSummary.totalSak} sak / ${batchSummary.totalKg} kg).`,
       });
 
-      // Background sync batch rows to Google Sheets "Distribusi Pakan"
-      fetch('/api/sheets/sync-pakan', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          rows: newItems.map((item) => ({
-            tanggal,
-            branchId: item.branchId,
-            branchName: item.branchName,
-            cageId: item.id,
-            cageName: item.kandang,
-            populasi: item.populasi,
-            jenisPakan: item.jenisPakan,
-            jumlahPakanKg: item.jumlahPakanKg,
-            kirimKg: item.kirimKg,
-            kirimSak: item.kirimSak,
-            konsumsiGrPerEkor: item.konsumsiGr,
-            userName: currentUser?.name || 'Pengawas Lapangan',
-          })),
-        }),
-      }).catch((err) => console.warn('Background batch sync to Google Sheets:', err));
+      const batchPayload = {
+        rows: newItems.map((item) => ({
+          tanggal,
+          branchId: item.branchId,
+          branchName: item.branchName,
+          cageId: item.id,
+          cageName: item.kandang,
+          populasi: item.populasi,
+          jenisPakan: item.jenisPakan,
+          jumlahPakanKg: item.jumlahPakanKg,
+          kirimKg: item.kirimKg,
+          kirimSak: item.kirimSak,
+          konsumsiGrPerEkor: item.konsumsiGr,
+          userName: currentUser?.name || 'Pengawas Lapangan',
+        })),
+      };
+
+      // Tandai data telah berubah secara lokal
+      markDataDirty();
+
+      if (!navigator.onLine) {
+        enqueuePendingSync({
+          type: 'pakan',
+          url: '/api/sheets/sync-pakan',
+          payload: batchPayload,
+        });
+        console.log('[Offline] Data batch pakan disimpan di antrean HP.');
+      } else {
+        // Background sync batch rows to Google Sheets "Distribusi Pakan"
+        fetch('/api/sheets/sync-pakan', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(batchPayload),
+        })
+          .then(() => performAutoSync())
+          .catch((err) => {
+            console.warn('Background batch sync pakan gagal, diantrekan:', err);
+            enqueuePendingSync({
+              type: 'pakan',
+              url: '/api/sheets/sync-pakan',
+              payload: batchPayload,
+            });
+          });
+      }
 
       setToastMessage(`Sukses mencatat ${newItems.length} kandang di ${branchName} ke Spreadsheet!`);
       setShowToast(true);

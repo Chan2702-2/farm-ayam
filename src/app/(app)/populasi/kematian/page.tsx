@@ -17,6 +17,7 @@ import { getFarmCages, saveFarmCages, getCageById, FarmCageData } from '@/lib/da
 import { Modal } from '@/components/ui/Modal';
 import { getCurrentUser } from '@/lib/data/auth-users';
 import { addActivityLog } from '@/lib/data/activity-log';
+import { markDataDirty, performAutoSync, isSyncNeeded, enqueuePendingSync } from '@/lib/sync/auto-sync';
 
 export default function CatatKematianPage() {
   const router = useRouter();
@@ -49,6 +50,13 @@ export default function CatatKematianPage() {
       setAfkir(initial.afkir || 0);
       setMutasi(initial.mutasiKeluar || 0);
     }
+
+    return () => {
+      // Skema: saat keluar dari menu input & jika online, lakukan sinkron otomatis
+      if (typeof window !== 'undefined' && navigator.onLine && isSyncNeeded()) {
+        performAutoSync();
+      }
+    };
   }, []);
 
   const initialPop = selectedCage?.populasiAwal || 4104;
@@ -87,25 +95,46 @@ export default function CatatKematianPage() {
       description: `Mencatat ${mati} ekor mati (${penyebab}). Sisa populasi: ${sisaAyam.toLocaleString('id-ID')} ekor.`,
     });
 
-    // Otomatis sinkronisasi ke Google Sheets di background
-    fetch('/api/sheets/sync-populasi', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        row: {
-          tanggal: '2026-09-03',
-          branchId: selectedCage.branchId,
-          branchName: selectedCage.branchName,
-          cageId: selectedCage.id,
-          cageName: selectedCage.name,
-          tipe: 'KEMATIAN',
-          jumlah: mati,
-          populasiAkhir: sisaAyam,
-          catatan: `${penyebab} - ${catatan}`,
-          userName: user?.name || 'Pengawas Lapangan',
-        },
-      }),
-    }).catch((err) => console.warn('Background sync to Google Sheets skipped or failed:', err));
+    const popRow = {
+      tanggal: new Date().toISOString().split('T')[0],
+      branchId: selectedCage.branchId,
+      branchName: selectedCage.branchName,
+      cageId: selectedCage.id,
+      cageName: selectedCage.name,
+      tipe: 'KEMATIAN' as const,
+      jumlah: mati,
+      populasiAkhir: sisaAyam,
+      catatan: `${penyebab} - ${catatan}`,
+      userName: user?.name || 'Pengawas Lapangan',
+    };
+
+    // Tandai data telah berubah
+    markDataDirty();
+
+    if (!navigator.onLine) {
+      enqueuePendingSync({
+        type: 'populasi',
+        url: '/api/sheets/sync-populasi',
+        payload: { row: popRow },
+      });
+      console.log('[Offline] Data kematian disimpan di antrean HP.');
+    } else {
+      // Otomatis sinkronisasi ke Google Sheets di background
+      fetch('/api/sheets/sync-populasi', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ row: popRow }),
+      })
+        .then(() => performAutoSync())
+        .catch((err) => {
+          console.warn('Background sync kematian gagal, diantrekan:', err);
+          enqueuePendingSync({
+            type: 'populasi',
+            url: '/api/sheets/sync-populasi',
+            payload: { row: popRow },
+          });
+        });
+    }
 
     setShowConfirmModal(false);
     setShowToast(true);

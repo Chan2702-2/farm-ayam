@@ -19,9 +19,11 @@ export function LphExportModal({
   branchName = 'Cabang 3 Alur',
   totalCages,
   totalProduksi,
-  initialDate = '2026-09-03',
+  initialDate,
 }: LphExportModalProps) {
-  const [selectedDate, setSelectedDate] = useState(initialDate);
+  const [selectedDate, setSelectedDate] = useState(
+    () => initialDate || new Date().toISOString().split('T')[0]
+  );
   const [exporting, setExporting] = useState(false);
 
   const handleDownload = async () => {

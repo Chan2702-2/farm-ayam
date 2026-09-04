@@ -4,6 +4,9 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeftRight, Save, CheckCircle2 } from 'lucide-react';
 import { getFarmCages, saveFarmCages, FarmCageData } from '@/lib/data/farm-data';
+import { getCurrentUser } from '@/lib/data/auth-users';
+import { addActivityLog } from '@/lib/data/activity-log';
+import { markDataDirty, performAutoSync, isSyncNeeded, enqueuePendingSync } from '@/lib/sync/auto-sync';
 
 export default function PopulasiMutasiPage() {
   const router = useRouter();
@@ -22,17 +25,26 @@ export default function PopulasiMutasiPage() {
       setKandangAsal(list[0]);
       setKandangTujuan(list[1]);
     }
+
+    return () => {
+      // Skema: saat keluar dari menu input & jika online, lakukan sinkron otomatis
+      if (typeof window !== 'undefined' && navigator.onLine && isSyncNeeded()) {
+        performAutoSync();
+      }
+    };
   }, []);
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
     if (!kandangAsal) return;
 
+    const sisaAsal = Math.max(0, kandangAsal.populasiHidup - jumlah);
+
     const updated = cages.map((c) => {
       if (c.id === kandangAsal.id) {
         return {
           ...c,
-          populasiHidup: Math.max(0, c.populasiHidup - jumlah),
+          populasiHidup: sisaAsal,
           mutasiKeluar: (c.mutasiKeluar || 0) + jumlah,
         };
       }
@@ -48,6 +60,58 @@ export default function PopulasiMutasiPage() {
 
     setCages(updated);
     saveFarmCages(updated);
+
+    const user = getCurrentUser();
+    addActivityLog({
+      userName: user?.name || 'Pengawas Lapangan',
+      userRole: user?.role || 'PENGAWAS',
+      branchId: kandangAsal.branchId,
+      branchName: kandangAsal.branchName,
+      actionType: 'MUTASI',
+      title: `Mutasi Ayam ${kandangAsal.name} (${jumlah} ekor)`,
+      description: `${tipeMutasi === 'PINDAH_KANDANG' ? `Pindah ke ${kandangTujuan?.name}` : 'Masuk Pullet'}. Catatan: ${catatan || '-'}`,
+    });
+
+    const popRow = {
+      tanggal: new Date().toISOString().split('T')[0],
+      branchId: kandangAsal.branchId,
+      branchName: kandangAsal.branchName,
+      cageId: kandangAsal.id,
+      cageName: kandangAsal.name,
+      tipe: 'MUTASI' as const,
+      jumlah,
+      populasiAkhir: sisaAsal,
+      catatan: `${tipeMutasi === 'PINDAH_KANDANG' ? `Mutasi ke ${kandangTujuan?.name}` : 'Mutasi Pullet'} - ${catatan}`.trim(),
+      userName: user?.name || 'Pengawas Lapangan',
+    };
+
+    // Tandai data telah berubah secara lokal
+    markDataDirty();
+
+    if (!navigator.onLine) {
+      enqueuePendingSync({
+        type: 'populasi',
+        url: '/api/sheets/sync-populasi',
+        payload: { row: popRow },
+      });
+      console.log('[Offline] Data mutasi disimpan di antrean HP.');
+    } else {
+      fetch('/api/sheets/sync-populasi', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ row: popRow }),
+      })
+        .then(() => performAutoSync())
+        .catch((err) => {
+          console.warn('Background sync mutasi gagal, diantrekan:', err);
+          enqueuePendingSync({
+            type: 'populasi',
+            url: '/api/sheets/sync-populasi',
+            payload: { row: popRow },
+          });
+        });
+    }
+
     setShowToast(true);
 
     setTimeout(() => {

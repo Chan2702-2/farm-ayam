@@ -9,7 +9,7 @@ export const dynamic = 'force-dynamic';
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const dateParam = searchParams.get('date') || '2026-09-03';
+    const dateParam = searchParams.get('date') || new Date().toISOString().split('T')[0];
     const branchParam = (searchParams.get('branch') || '3-alur').toLowerCase();
 
     // Format Indonesian Date string e.g. KAMIS, 3 SEPTEMBER 2026

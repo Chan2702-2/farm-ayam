@@ -34,6 +34,7 @@ import {
 import { KandangCard } from '@/components/kandang/KandangCard';
 import { getCurrentUser, filterCagesForUser, AuthUser } from '@/lib/data/auth-users';
 import { Modal } from '@/components/ui/Modal';
+import { initAutoSyncListeners, performAutoSync, isSyncNeeded } from '@/lib/sync/auto-sync';
 
 export default function DashboardPage() {
   const [branches, setBranches] = useState<FarmBranch[]>([]);
@@ -44,10 +45,18 @@ export default function DashboardPage() {
   const [showExportModal, setShowExportModal] = useState(false);
   const [showBranchModal, setShowBranchModal] = useState(false);
   const [exporting, setExporting] = useState(false);
-  const [selectedDate, setSelectedDate] = useState('2026-09-03');
+  const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().split('T')[0]);
   const [todayDateFormatted, setTodayDateFormatted] = useState('');
 
   useEffect(() => {
+    // Inisialisasi pendengar auto-sync (online, offline, visibility)
+    const cleanupSync = initAutoSyncListeners();
+
+    // Skema otomatis: Masuk ke menu beranda & jika online, lakukan sinkron otomatis jika ada data
+    if (typeof window !== 'undefined' && navigator.onLine && isSyncNeeded()) {
+      performAutoSync();
+    }
+
     setTodayDateFormatted(
       new Intl.DateTimeFormat('id-ID', {
         weekday: 'long',
@@ -56,6 +65,10 @@ export default function DashboardPage() {
         year: 'numeric',
       }).format(new Date())
     );
+
+    return () => {
+      cleanupSync();
+    };
   }, []);
 
   const loadData = () => {

@@ -18,6 +18,7 @@ import { Modal } from '@/components/ui/Modal';
 import { getCurrentUser, filterCagesForUser } from '@/lib/data/auth-users';
 import { addActivityLog } from '@/lib/data/activity-log';
 import { EggStepper, EggDefectInput, HenDayActDonut } from '@/components/produksi';
+import { markDataDirty, performAutoSync, isSyncNeeded, enqueuePendingSync } from '@/lib/sync/auto-sync';
 
 export default function InputProduksiPage() {
   const router = useRouter();
@@ -53,6 +54,13 @@ export default function InputProduksiPage() {
       }
     }
     setSelectedCageId(defaultId);
+
+    return () => {
+      // Skema: saat keluar dari menu input & jika online, lakukan sinkron otomatis
+      if (typeof window !== 'undefined' && navigator.onLine && isSyncNeeded()) {
+        performAutoSync();
+      }
+    };
   }, []);
 
   const selectedCage = cages.find((c) => c.id === selectedCageId) || cages[0];
@@ -123,36 +131,60 @@ export default function InputProduksiPage() {
       description: `Mencatat panen Pagi ${pagiIkat * 30} butir & Sore ${soreIkat * 30} butir. Total: ${totalProduksi.toLocaleString('id-ID')} butir (Hen-Day ACT: ${actPercent}%).`,
     });
 
-    // Otomatis sinkronisasi ke Google Sheets di background
-    fetch('/api/sheets/sync-produksi', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        row: {
-          tanggal: new Date().toISOString().split('T')[0],
-          branchId: selectedCage?.branchId || 'branch-1',
-          branchName: selectedCage?.branchName || 'Cabang',
-          cageId: selectedCage?.id || selectedCageId,
-          cageName: selectedCage?.name || 'Kandang',
-          pagiIkat,
-          pagiButir: pagiIkat * 30,
-          soreIkat,
-          soreButir: soreIkat * 30,
-          butir,
-          retak,
-          putih,
-          kotorPutih,
-          k,
-          r,
-          l,
-          totalProduksi,
-          populasiHidup: populasi,
-          actPercent,
-          standardPercent,
-          userName: user?.name || 'Pengawas Lapangan',
-        },
-      }),
-    }).catch((err) => console.warn('Background sync to Google Sheets skipped or failed:', err));
+    const prodRow = {
+      tanggal: new Date().toISOString().split('T')[0],
+      branchId: selectedCage?.branchId || 'branch-1',
+      branchName: selectedCage?.branchName || 'Cabang',
+      cageId: selectedCage?.id || selectedCageId,
+      cageName: selectedCage?.name || 'Kandang',
+      pagiIkat,
+      pagiButir: pagiIkat * 30,
+      soreIkat,
+      soreButir: soreIkat * 30,
+      butir,
+      retak,
+      putih,
+      kotorPutih,
+      k,
+      r,
+      l,
+      totalProduksi,
+      populasiHidup: populasi,
+      actPercent,
+      standardPercent,
+      userName: user?.name || 'Pengawas Lapangan',
+    };
+
+    // Tandai data telah berubah secara lokal
+    markDataDirty();
+
+    // Jika offline: antrekan secara lokal di HP tanpa memblokir
+    if (!navigator.onLine) {
+      enqueuePendingSync({
+        type: 'produksi',
+        url: '/api/sheets/sync-produksi',
+        payload: { row: prodRow },
+      });
+      console.log('[Offline] Data produksi disimpan di antrean HP.');
+    } else {
+      // Jika online: kirim data dan sinkron otomatis di background
+      fetch('/api/sheets/sync-produksi', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ row: prodRow }),
+      })
+        .then(() => {
+          performAutoSync();
+        })
+        .catch((err) => {
+          console.warn('Background sync ke Google Sheets gagal, diantrekan:', err);
+          enqueuePendingSync({
+            type: 'produksi',
+            url: '/api/sheets/sync-produksi',
+            payload: { row: prodRow },
+          });
+        });
+    }
 
     setShowConfirmModal(false);
     setShowToast(true);

@@ -5,6 +5,9 @@ import { useRouter } from 'next/navigation';
 import { Archive, Save, CheckCircle2, ChevronDown, Check } from 'lucide-react';
 import { getFarmCages, saveFarmCages, FarmCageData } from '@/lib/data/farm-data';
 import { Modal } from '@/components/ui/Modal';
+import { getCurrentUser } from '@/lib/data/auth-users';
+import { addActivityLog } from '@/lib/data/activity-log';
+import { markDataDirty, performAutoSync, isSyncNeeded, enqueuePendingSync } from '@/lib/sync/auto-sync';
 
 export default function PopulasiAfkirPage() {
   const router = useRouter();
@@ -23,18 +26,27 @@ export default function PopulasiAfkirPage() {
     const list = getFarmCages();
     setCages(list);
     if (list.length > 0) setSelectedCage(list[0]);
+
+    return () => {
+      // Skema: saat keluar dari menu input & jika online, lakukan sinkron otomatis
+      if (typeof window !== 'undefined' && navigator.onLine && isSyncNeeded()) {
+        performAutoSync();
+      }
+    };
   }, []);
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedCage) return;
 
+    const populasiAkhir = Math.max(0, selectedCage.populasiHidup - jumlahAfkir);
+
     const updated = cages.map((c) => {
       if (c.id === selectedCage.id) {
         return {
           ...c,
           afkir: (c.afkir || 0) + jumlahAfkir,
-          populasiHidup: Math.max(0, c.populasiHidup - jumlahAfkir),
+          populasiHidup: populasiAkhir,
         };
       }
       return c;
@@ -42,6 +54,58 @@ export default function PopulasiAfkirPage() {
 
     setCages(updated);
     saveFarmCages(updated);
+
+    const user = getCurrentUser();
+    addActivityLog({
+      userName: user?.name || 'Pengawas Lapangan',
+      userRole: user?.role || 'PENGAWAS',
+      branchId: selectedCage.branchId,
+      branchName: selectedCage.branchName,
+      actionType: 'MORTALITAS',
+      title: `Catat Afkir ${selectedCage.name}`,
+      description: `Mencatat culling/afkir ${jumlahAfkir} ekor (${alasan}). Sisa populasi: ${populasiAkhir.toLocaleString('id-ID')} ekor.`,
+    });
+
+    const popRow = {
+      tanggal: new Date().toISOString().split('T')[0],
+      branchId: selectedCage.branchId,
+      branchName: selectedCage.branchName,
+      cageId: selectedCage.id,
+      cageName: selectedCage.name,
+      tipe: 'AFKIR' as const,
+      jumlah: jumlahAfkir,
+      populasiAkhir,
+      catatan: `${alasan} - ${tujuan} (Berat: ${beratRata || '-'}) ${catatan}`.trim(),
+      userName: user?.name || 'Pengawas Lapangan',
+    };
+
+    // Tandai data telah berubah secara lokal
+    markDataDirty();
+
+    if (!navigator.onLine) {
+      enqueuePendingSync({
+        type: 'populasi',
+        url: '/api/sheets/sync-populasi',
+        payload: { row: popRow },
+      });
+      console.log('[Offline] Data afkir disimpan di antrean HP.');
+    } else {
+      fetch('/api/sheets/sync-populasi', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ row: popRow }),
+      })
+        .then(() => performAutoSync())
+        .catch((err) => {
+          console.warn('Background sync afkir gagal, diantrekan:', err);
+          enqueuePendingSync({
+            type: 'populasi',
+            url: '/api/sheets/sync-populasi',
+            payload: { row: popRow },
+          });
+        });
+    }
+
     setShowToast(true);
 
     setTimeout(() => {
