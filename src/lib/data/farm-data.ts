@@ -255,6 +255,12 @@ export function addFarmCage(cage: FarmCageData): void {
   saveFarmCages(updated);
 }
 
+export function updateFarmCage(updatedCage: FarmCageData): void {
+  const current = getFarmCages('all');
+  const updated = current.map((c) => (c.id === updatedCage.id ? updatedCage : c));
+  saveFarmCages(updated);
+}
+
 export function deleteFarmCage(cageId: string): void {
   const current = getFarmCages('all');
   const updated = current.filter((c) => c.id !== cageId);

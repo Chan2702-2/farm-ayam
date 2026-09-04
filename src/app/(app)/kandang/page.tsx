@@ -23,6 +23,7 @@ import {
   FarmBranch
 } from '@/lib/data/farm-data';
 import { KandangCard } from '@/components/kandang/KandangCard';
+import { EditKandangModal } from '@/components/kandang/EditKandangModal';
 import { getCurrentUser, filterCagesForUser, AuthUser } from '@/lib/data/auth-users';
 import { Modal } from '@/components/ui/Modal';
 import { markDataDirty, performAutoSync, pullDataFromSheets } from '@/lib/sync/auto-sync';
@@ -37,6 +38,7 @@ export default function KandangPage() {
   // Modals
   const [showAddModal, setShowAddModal] = useState(false);
   const [showAddBranchModal, setShowAddBranchModal] = useState(false);
+  const [editingCage, setEditingCage] = useState<FarmCageData | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   // Add Branch Form State
@@ -476,7 +478,11 @@ export default function KandangPage() {
           </div>
         ) : (
           filteredCages.map((cage) => (
-            <KandangCard key={cage.id} cage={cage} />
+            <KandangCard
+              key={cage.id}
+              cage={cage}
+              onEdit={(c) => setEditingCage(c)}
+            />
           ))
         )}
       </div>
@@ -807,6 +813,25 @@ export default function KandangPage() {
           </div>
         </form>
       </Modal>
+
+      {/* Modal Edit Kandang */}
+      <EditKandangModal
+        isOpen={!!editingCage}
+        onClose={() => setEditingCage(null)}
+        cage={editingCage}
+        branches={branches}
+        currentUser={currentUser}
+        onSaved={(updated) => {
+          loadData();
+          setToastMessage(`Unit kandang "${updated.name}" berhasil diperbarui!`);
+          setTimeout(() => setToastMessage(null), 3000);
+        }}
+        onDeleted={() => {
+          loadData();
+          setToastMessage('Unit kandang berhasil dihapus.');
+          setTimeout(() => setToastMessage(null), 3000);
+        }}
+      />
 
       {/* Toast Notification */}
       <div

@@ -2,14 +2,15 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { ChevronRight, Egg, User, ShieldAlert, CheckCircle2 } from 'lucide-react';
+import { ChevronRight, Egg, User, ShieldAlert, CheckCircle2, Pencil } from 'lucide-react';
 import { FarmCageData } from '@/lib/data/farm-data';
 
 interface KandangCardProps {
   cage: FarmCageData;
+  onEdit?: (cage: FarmCageData) => void;
 }
 
-export function KandangCard({ cage }: KandangCardProps) {
+export function KandangCard({ cage, onEdit }: KandangCardProps) {
   const isBelow = cage.actPercent < cage.standardPercent && cage.totalProduksi > 0;
   const isExcellent = cage.actPercent >= cage.standardPercent && cage.totalProduksi > 0;
   const isCritical = cage.mati >= 5 || (cage.actPercent > 0 && cage.actPercent < 88);
@@ -87,8 +88,22 @@ export function KandangCard({ cage }: KandangCardProps) {
           </div>
         </div>
 
-        <div className="flex items-center gap-1 shrink-0">
+        <div className="flex items-center gap-1.5 shrink-0">
           {statusBadge()}
+          {onEdit && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onEdit(cage);
+              }}
+              className="w-7 h-7 rounded-lg bg-slate-100 hover:bg-sky-100 text-slate-500 hover:text-[#0284c7] flex items-center justify-center transition-colors"
+              title="Edit Unit Kandang"
+            >
+              <Pencil className="w-3.5 h-3.5" />
+            </button>
+          )}
           <ChevronRight className="w-4 h-4 text-slate-400" />
         </div>
       </div>

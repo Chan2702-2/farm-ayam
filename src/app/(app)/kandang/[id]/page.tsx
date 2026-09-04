@@ -12,9 +12,12 @@ import {
   AlertTriangle,
   Plus,
   RefreshCw,
+  Pencil,
 } from 'lucide-react';
-import { getCageById, getFarmCages, FarmCageData } from '@/lib/data/farm-data';
+import { getCageById, getFarmCages, getFarmBranches, FarmCageData } from '@/lib/data/farm-data';
+import { getCurrentUser } from '@/lib/data/auth-users';
 import { pullDataFromSheets } from '@/lib/sync/auto-sync';
+import { EditKandangModal } from '@/components/kandang/EditKandangModal';
 
 export default function KandangDetailPage() {
   const params = useParams();
@@ -23,6 +26,7 @@ export default function KandangDetailPage() {
 
   const [cage, setCage] = useState<FarmCageData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isEditOpen, setIsEditOpen] = useState(false);
 
   useEffect(() => {
     if (!cageId) return;
@@ -133,7 +137,7 @@ export default function KandangDetailPage() {
           </div>
         </div>
 
-        <div>
+        <div className="flex items-center gap-2">
           {isBelow ? (
             <span className="px-3 py-1 rounded-full bg-amber-100 text-amber-800 text-xs font-bold">
               Below Standard
@@ -144,6 +148,15 @@ export default function KandangDetailPage() {
               Optimal
             </span>
           )}
+          <button
+            type="button"
+            onClick={() => setIsEditOpen(true)}
+            className="px-3 py-1 rounded-full bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 active:scale-95 text-xs font-bold flex items-center gap-1.5 shadow-xs transition-all"
+            title="Edit Data Kandang"
+          >
+            <Pencil className="w-3.5 h-3.5 text-[#0284c7]" />
+            <span>Edit</span>
+          </button>
         </div>
       </div>
 
@@ -320,6 +333,21 @@ export default function KandangDetailPage() {
           </Link>
         </div>
       </div>
+
+      {/* Modal Edit Kandang */}
+      <EditKandangModal
+        isOpen={isEditOpen}
+        onClose={() => setIsEditOpen(false)}
+        cage={cage}
+        branches={getFarmBranches()}
+        currentUser={getCurrentUser()}
+        onSaved={(updated) => {
+          setCage(updated);
+        }}
+        onDeleted={() => {
+          router.push('/kandang');
+        }}
+      />
     </div>
   );
 }
