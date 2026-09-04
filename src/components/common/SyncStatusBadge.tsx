@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Wifi, WifiOff, RefreshCw, CheckCircle2, Cloud } from 'lucide-react';
-import { isSyncNeeded, performAutoSync, getLastSyncTime } from '@/lib/sync/auto-sync';
+import { isSyncNeeded, performAutoSync, pullDataFromSheets, getLastSyncTime } from '@/lib/sync/auto-sync';
 
 export function SyncStatusBadge() {
   const [isOnline, setIsOnline] = useState(true);
@@ -46,11 +46,15 @@ export function SyncStatusBadge() {
     };
   }, []);
 
-  const handleClick = () => {
+  const handleClick = async () => {
     if (isOnline) {
-      performAutoSync(true);
+      setIsSyncing(true);
+      await performAutoSync(true);
+      await pullDataFromSheets();
+      setIsSyncing(false);
+      updateStatus();
     } else {
-      alert('Perangkat Anda sedang Offline.\nSemua data yang Anda input tetap aman tersimpan di HP dan akan otomatis dikirim saat terhubung internet kembali.');
+      alert('Perangkat Anda sedang Offline.\nSemua data yang Anda input tetap aman tersimpan di HP/laptop dan akan otomatis dikirim saat terhubung internet kembali.');
     }
   };
 

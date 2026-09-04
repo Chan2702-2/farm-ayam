@@ -101,8 +101,8 @@ export function InstallPrompt() {
         <div className="p-3.5 bg-white/95 backdrop-blur-md rounded-2xl border border-sky-200 shadow-[0_8px_30px_rgb(0,0,0,0.12)] flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
             {/* App Icon */}
-            <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-[#0284c7] to-[#0369a1] text-white flex items-center justify-center font-jakarta font-extrabold text-sm shadow-xs shrink-0">
-              YF
+            <div className="w-11 h-11 rounded-xl bg-white border border-slate-100 flex items-center justify-center p-1 shadow-xs shrink-0 overflow-hidden">
+              <img src="/icons/logoyf.png" alt="Yuki Farm" className="w-full h-full object-contain" />
             </div>
 
             <div className="min-w-0">

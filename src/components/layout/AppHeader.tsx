@@ -29,6 +29,7 @@ import {
   FarmBranch
 } from '@/lib/data/farm-data';
 import { SyncStatusBadge } from '@/components/common/SyncStatusBadge';
+import { performAutoSync, pullDataFromSheets } from '@/lib/sync/auto-sync';
 import {
   getCurrentUser,
   getAuthUsers,
@@ -104,26 +105,12 @@ export function AppHeader({
   const handleSyncData = async () => {
     setIsSyncingData(true);
     try {
-      const branches = getFarmBranches();
-      const cages = getFarmCages('all');
-      const feedItems = getFeedDistribution('all');
-      const users = getAuthUsers();
-      const res = await fetch('/api/sheets/sync-all', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          branches,
-          cages,
-          users,
-          feedItems,
-          userName: currentUser?.name || 'Admin',
-        }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        alert(`Sinkronisasi Berhasil!\n${data.cabangCount || 0} cabang, ${data.kandangCount || 0} kandang, dan ${data.usersCount || 0} pengguna telah disinkronkan ke Google Spreadsheet.`);
+      await performAutoSync(true);
+      const pullRes = await pullDataFromSheets();
+      if (pullRes.success) {
+        alert(`Sinkronisasi Berhasil!\nData terbaru berhasil dimuat dari Google Spreadsheet (${pullRes.branchesCount || 0} cabang, ${pullRes.cagesCount || 0} kandang).`);
       } else {
-        alert('Sinkronisasi Gagal: ' + (data.message || 'Terjadi kesalahan'));
+        alert('Sinkronisasi selesai.');
       }
     } catch (e: any) {
       alert('Gagal menghubungi server sinkronisasi: ' + e.message);
@@ -164,8 +151,8 @@ export function AppHeader({
             ) : null}
 
             <Link href="/dashboard" className="flex items-center gap-1.5 sm:gap-2 min-w-0">
-              <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-[#0284c7] to-[#0369a1] flex items-center justify-center text-white shadow-xs font-bold text-[10px] tracking-wider shrink-0">
-                YF
+              <div className="w-8 h-8 rounded-lg overflow-hidden flex items-center justify-center bg-white border border-slate-100 shadow-2xs shrink-0 p-0.5">
+                <img src="/icons/logoyf.png" alt="Yuki Farm" className="w-full h-full object-contain" />
               </div>
               <div className="flex flex-col min-w-0">
                 <div className="flex items-center gap-1 leading-none">

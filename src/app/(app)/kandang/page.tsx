@@ -25,7 +25,7 @@ import {
 import { KandangCard } from '@/components/kandang/KandangCard';
 import { getCurrentUser, filterCagesForUser, AuthUser } from '@/lib/data/auth-users';
 import { Modal } from '@/components/ui/Modal';
-import { markDataDirty, performAutoSync } from '@/lib/sync/auto-sync';
+import { markDataDirty, performAutoSync, pullDataFromSheets } from '@/lib/sync/auto-sync';
 
 export default function KandangPage() {
   const [branches, setBranches] = useState<FarmBranch[]>([]);
@@ -73,6 +73,11 @@ export default function KandangPage() {
 
   useEffect(() => {
     loadData();
+
+    // Jika online, tarik data terbaru dari Google Sheets ke laptop/browser ini
+    if (typeof window !== 'undefined' && navigator.onLine) {
+      pullDataFromSheets().then(() => loadData());
+    }
 
     const handleBranchChange = () => loadData();
     const handleAuthChange = () => loadData();

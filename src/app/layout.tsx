@@ -20,8 +20,9 @@ export const metadata: Metadata = {
     title: 'Yuki Farm',
   },
   icons: {
-    icon: '/icons/icon-192x192.png',
-    apple: '/icons/icon-192x192.png',
+    icon: '/icons/logoyf.png',
+    shortcut: '/icons/logoyf.png',
+    apple: '/icons/logoyf.png',
   },
 }
 

@@ -106,8 +106,8 @@ export default function LoginPage() {
       <div className="w-full max-w-md space-y-4">
         {/* Header Branding */}
         <div className="text-center space-y-1.5">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-[#0284c7] to-[#0369a1] text-white shadow-md shadow-sky-600/25 mb-1 font-jakarta font-extrabold text-xl">
-            YF
+          <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-white p-1.5 shadow-md shadow-sky-600/15 mb-1 border border-slate-100 overflow-hidden">
+            <img src="/icons/logoyf.png" alt="Yuki Farm Logo" className="w-full h-full object-contain" />
           </div>
           <h1 className="font-jakarta font-extrabold text-2xl text-slate-900 tracking-tight">
             YUKI<span className="text-[#0284c7] ml-0.5">FARM</span>

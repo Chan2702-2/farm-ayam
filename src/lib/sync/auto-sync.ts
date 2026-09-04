@@ -1,6 +1,15 @@
 'use client';
 
-import { getFarmBranches, getFarmCages, getFeedDistribution } from '@/lib/data/farm-data';
+import {
+  getFarmBranches,
+  saveFarmBranches,
+  getFarmCages,
+  saveFarmCages,
+  getFeedDistribution,
+  saveFeedDistribution,
+  getActiveBranchId,
+  setActiveBranchId,
+} from '@/lib/data/farm-data';
 import { getAuthUsers, getCurrentUser } from '@/lib/data/auth-users';
 
 const NEED_SYNC_KEY = 'yuki_needs_sync';
@@ -96,12 +105,88 @@ export function getLastSyncTime(): string | null {
 }
 
 /**
- * Melakukan sinkronisasi otomatis ke Google Sheets.
- * Skema:
+ * Tarik data terbaru dari Google Sheets ke memori browser / laptop.
+ * Menjamin saat login di laptop, seluruh cabang dan kandang yang di-input di HP langsung tampil!
+ */
+export async function pullDataFromSheets(): Promise<{
+  success: boolean;
+  branchesCount?: number;
+  cagesCount?: number;
+  message?: string;
+}> {
+  if (typeof window === 'undefined') {
+    return { success: false, message: 'ssr' };
+  }
+
+  if (!navigator.onLine) {
+    return { success: false, message: 'offline' };
+  }
+
+  try {
+    console.log('[AutoSync] Menarik data terbaru dari Google Sheets ke perangkat ini...');
+    const res = await fetch('/api/sheets/pull', { cache: 'no-store' });
+    const data = await res.json();
+
+    if (!res.ok || !data.success) {
+      throw new Error(data.message || 'Gagal mengambil data dari Google Sheets');
+    }
+
+    const { branches = [], cages = [], feedItems = [] } = data;
+    let updated = false;
+
+    // 1. Simpan Cabang dari Google Sheets jika ada
+    if (Array.isArray(branches) && branches.length > 0) {
+      saveFarmBranches(branches);
+      const active = getActiveBranchId();
+      if (!active || active === 'all' || !branches.some((b: any) => b.id === active)) {
+        setActiveBranchId(branches[0].id);
+      }
+      updated = true;
+    }
+
+    // 2. Simpan Kandang dari Google Sheets jika ada
+    if (Array.isArray(cages) && cages.length > 0) {
+      saveFarmCages(cages);
+      updated = true;
+    }
+
+    // 3. Simpan Distribusi Pakan jika ada
+    if (Array.isArray(feedItems) && feedItems.length > 0) {
+      saveFeedDistribution(feedItems);
+      updated = true;
+    }
+
+    localStorage.setItem(LAST_SYNC_KEY, Date.now().toString());
+
+    if (updated) {
+      window.dispatchEvent(new Event('branchChange'));
+      window.dispatchEvent(new Event('feedChange'));
+    }
+
+    window.dispatchEvent(new CustomEvent('syncStateChange', { detail: { state: 'synced' } }));
+    console.log(
+      `[AutoSync] Sukses memuat ${branches.length} cabang & ${cages.length} kandang dari Google Sheets.`
+    );
+
+    return {
+      success: true,
+      branchesCount: branches.length,
+      cagesCount: cages.length,
+    };
+  } catch (err: any) {
+    console.warn('[AutoSync] Gagal menarik data dari Google Sheets:', err.message);
+    return { success: false, message: err.message };
+  }
+}
+
+/**
+ * Melakukan sinkronisasi otomatis ke Google Sheets (Dua Arah / Bidirectional).
  * - Jika offline: data tetap tersimpan aman di HP, tandai status offline.
  * - Jika online:
- *   1. Flush semua antrean tunda (produksi, pakan, mortalitas/populasi).
- *   2. Jalankan syncMaster untuk tab Master Cabang, Master Kandang, Master Pengguna.
+ *   1. Jika laptop/perangkat belum punya cabang/kandang, otomatis tarik dari spreadsheet!
+ *   2. Flush antrean tunda lokal (jika ada data yang diinput saat offline).
+ *   3. Update Master ke Spreadsheet jika ada cabang lokal.
+ *   4. Tarik update terbaru agar perangkat selalu sinkron dengan perangkat lain.
  */
 export async function performAutoSync(force: boolean = false): Promise<{ success: boolean; reason?: string }> {
   if (typeof window === 'undefined') {
@@ -121,8 +206,26 @@ export async function performAutoSync(force: boolean = false): Promise<{ success
     return { success: false, reason: 'offline' };
   }
 
-  // Jika tidak dipaksa dan tidak ada data yang perlu disinkronkan, lewati
+  const localBranches = getFarmBranches();
+  const localCages = getFarmCages('all');
+
+  // KASUS LAPTOP / PERANGKAT BARU:
+  // Jika cabang/kandang masih 0 di perangkat ini, langsung tarik data dari Google Sheets!
+  if (localBranches.length === 0 || localCages.length === 0) {
+    isSyncInProgress = true;
+    window.dispatchEvent(new CustomEvent('syncStateChange', { detail: { state: 'syncing' } }));
+    try {
+      const pullRes = await pullDataFromSheets();
+      return { success: pullRes.success };
+    } finally {
+      isSyncInProgress = false;
+    }
+  }
+
+  // Jika tidak dipaksa dan tidak ada data yang perlu dikirim:
+  // Tarik data terbaru dari spreadsheet di background agar selalu sinkron dengan perangkat lain
   if (!force && !isSyncNeeded()) {
+    pullDataFromSheets();
     return { success: true, reason: 'no_changes' };
   }
 
@@ -152,34 +255,32 @@ export async function performAutoSync(force: boolean = false): Promise<{ success
 
     savePendingQueue(remainingQueue);
 
-    // 2. Sinkronkan Master Data ke Google Sheets (Cabang, Kandang dengan populasi & umur terbaru, User)
-    const branches = getFarmBranches();
-    const cages = getFarmCages('all');
-    const users = getAuthUsers();
-    const user = getCurrentUser();
+    // 2. Sinkronkan Master Data ke Google Sheets (hanya jika ada cabang lokal)
+    if (localBranches.length > 0) {
+      const users = getAuthUsers();
+      const user = getCurrentUser();
 
-    const masterRes = await fetch('/api/sheets/sync-master', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        branches,
-        cages,
-        users,
-        userName: user?.name || 'AutoSync Sistem',
-      }),
-    });
-
-    if (!masterRes.ok) {
-      const errData = await masterRes.json().catch(() => ({}));
-      throw new Error(errData.message || 'Gagal sinkronisasi master data ke Spreadsheet');
+      await fetch('/api/sheets/sync-master', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          branches: localBranches,
+          cages: localCages,
+          users,
+          userName: user?.name || 'AutoSync Sistem',
+        }),
+      });
     }
+
+    // 3. Tarik kembali data terbaru dari spreadsheet untuk memastikan keselarasan
+    await pullDataFromSheets();
 
     // Jika semua antrean berhasil diproses
     if (remainingQueue.length === 0) {
       localStorage.removeItem(NEED_SYNC_KEY);
       localStorage.setItem(LAST_SYNC_KEY, Date.now().toString());
       window.dispatchEvent(new CustomEvent('syncStateChange', { detail: { state: 'synced' } }));
-      console.log('[AutoSync] Sukses sinkronisasi otomatis ke Google Spreadsheet.');
+      console.log('[AutoSync] Sukses sinkronisasi otomatis dua arah.');
       return { success: true };
     } else {
       markDataDirty();
@@ -187,7 +288,7 @@ export async function performAutoSync(force: boolean = false): Promise<{ success
       return { success: false, reason: 'partial_queue_remaining' };
     }
   } catch (err: any) {
-    console.warn('[AutoSync] Gagal mengirim data ke Google Sheets:', err.message);
+    console.warn('[AutoSync] Gagal sinkronisasi ke Google Sheets:', err.message);
     markDataDirty();
     window.dispatchEvent(new CustomEvent('syncStateChange', { detail: { state: 'error' } }));
     return { success: false, reason: err.message };
@@ -203,7 +304,7 @@ export function initAutoSyncListeners(): () => void {
   if (typeof window === 'undefined') return () => {};
 
   const handleOnline = () => {
-    console.log('[AutoSync] Perangkat kembali Online. Memulai sinkronisasi data tunda...');
+    console.log('[AutoSync] Perangkat kembali Online. Memulai sinkronisasi otomatis...');
     performAutoSync(true);
   };
 
@@ -213,8 +314,8 @@ export function initAutoSyncListeners(): () => void {
 
   const handleVisibility = () => {
     if (document.visibilityState === 'visible') {
-      // Saat pengguna membuka kembali browser atau ponsel
-      if (isSyncNeeded() && navigator.onLine) {
+      // Saat tab atau browser dibuka kembali
+      if (navigator.onLine) {
         performAutoSync();
       }
     }

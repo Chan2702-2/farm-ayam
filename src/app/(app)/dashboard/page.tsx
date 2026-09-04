@@ -34,7 +34,7 @@ import {
 import { KandangCard } from '@/components/kandang/KandangCard';
 import { getCurrentUser, filterCagesForUser, AuthUser } from '@/lib/data/auth-users';
 import { Modal } from '@/components/ui/Modal';
-import { initAutoSyncListeners, performAutoSync, isSyncNeeded } from '@/lib/sync/auto-sync';
+import { initAutoSyncListeners, performAutoSync, isSyncNeeded, pullDataFromSheets } from '@/lib/sync/auto-sync';
 
 export default function DashboardPage() {
   const [branches, setBranches] = useState<FarmBranch[]>([]);
@@ -49,12 +49,17 @@ export default function DashboardPage() {
   const [todayDateFormatted, setTodayDateFormatted] = useState('');
 
   useEffect(() => {
+    loadData();
+
     // Inisialisasi pendengar auto-sync (online, offline, visibility)
     const cleanupSync = initAutoSyncListeners();
 
-    // Skema otomatis: Masuk ke menu beranda & jika online, lakukan sinkron otomatis jika ada data
-    if (typeof window !== 'undefined' && navigator.onLine && isSyncNeeded()) {
-      performAutoSync();
+    // Skema otomatis: Masuk ke menu beranda & jika online, lakukan sinkronisasi otomatis
+    // dan tarik data cabang & kandang terbaru dari Google Sheets ke laptop/browser ini!
+    if (typeof window !== 'undefined' && navigator.onLine) {
+      performAutoSync().then(() => {
+        loadData();
+      });
     }
 
     setTodayDateFormatted(
