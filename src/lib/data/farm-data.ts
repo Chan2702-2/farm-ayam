@@ -76,8 +76,39 @@ export const initialFarmBranches: FarmBranch[] = [];
 export const initialFarmCages: FarmCageData[] = [];
 export const initialFeedDistribution: FeedDistributionItem[] = [];
 
+// Storage version identifier: Bumps old cached dummy data in user browsers
+const DATA_VERSION = 'v2_clean_scratch_v2';
+
+export function checkAndMigrateStorage(): void {
+  if (typeof window !== 'undefined') {
+    const version = localStorage.getItem('yuki_data_version');
+    if (version !== DATA_VERSION) {
+      localStorage.removeItem('yuki_farm_cages');
+      localStorage.removeItem('yuki_farm_branches');
+      localStorage.removeItem('yuki_feed_distribution');
+      localStorage.removeItem('yuki_activity_logs');
+      localStorage.removeItem('yuki_active_branch');
+      localStorage.setItem('yuki_data_version', DATA_VERSION);
+    }
+  }
+}
+
+export function clearAllFarmData(): void {
+  if (typeof window !== 'undefined') {
+    localStorage.removeItem('yuki_farm_cages');
+    localStorage.removeItem('yuki_farm_branches');
+    localStorage.removeItem('yuki_feed_distribution');
+    localStorage.removeItem('yuki_activity_logs');
+    localStorage.removeItem('yuki_active_branch');
+    localStorage.setItem('yuki_data_version', DATA_VERSION);
+    window.dispatchEvent(new Event('branchChange'));
+    window.dispatchEvent(new Event('feedChange'));
+  }
+}
+
 // Branch Store Methods
 export function getFarmBranches(): FarmBranch[] {
+  checkAndMigrateStorage();
   if (typeof window !== 'undefined') {
     const saved = localStorage.getItem('yuki_farm_branches');
     if (saved) {
@@ -163,6 +194,7 @@ export function setActiveBranchId(branchId: string): void {
 
 // Cage Store Methods
 export function getFarmCages(branchId?: string): FarmCageData[] {
+  checkAndMigrateStorage();
   let list = initialFarmCages;
   if (typeof window !== 'undefined') {
     const saved = localStorage.getItem('yuki_farm_cages');

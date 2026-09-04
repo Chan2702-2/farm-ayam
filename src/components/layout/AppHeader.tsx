@@ -14,12 +14,14 @@ import {
   User,
   Warehouse,
   Lock,
-  History
+  History,
+  Trash2
 } from 'lucide-react';
 import {
   getFarmBranches,
   getActiveBranchId,
   setActiveBranchId,
+  clearAllFarmData,
   FarmBranch
 } from '@/lib/data/farm-data';
 import {
@@ -356,6 +358,20 @@ export function AppHeader({
           </div>
 
           <div className="pt-2 flex flex-col gap-2">
+            <button
+              onClick={() => {
+                if (confirm('Bersihkan semua data cache browser dan mulai dari 0?')) {
+                  clearAllFarmData();
+                  setShowProfileModal(false);
+                  window.location.reload();
+                }
+              }}
+              className="w-full h-11 rounded-xl bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-700 font-bold text-xs flex items-center justify-center gap-2 transition-all"
+            >
+              <Trash2 className="w-4 h-4 text-slate-500" />
+              <span>Bersihkan Cache & Reset Data Nol</span>
+            </button>
+
             <button
               onClick={handleLogout}
               className="w-full h-11 rounded-xl bg-red-50 hover:bg-red-100 active:scale-95 text-red-600 font-bold text-xs flex items-center justify-center gap-2 transition-all"
