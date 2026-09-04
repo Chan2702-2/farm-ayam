@@ -264,7 +264,7 @@ export function EditKandangModal({
             <input
               type="text"
               required
-              placeholder="Contoh: KAWAT-01"
+              placeholder="Nama / Penomoran"
               value={nama}
               onChange={(e) => setNama(e.target.value)}
               className="w-full h-11 px-3 rounded-xl border border-slate-200 bg-slate-50 text-sm font-semibold text-slate-800 outline-none focus:bg-white focus:border-[#0284c7]"
@@ -293,7 +293,7 @@ export function EditKandangModal({
             </label>
             <input
               type="tel"
-              placeholder="Contoh: 081234567890"
+              placeholder="No HP / WhatsApp Petugas"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               className="w-full h-11 px-3 rounded-xl border border-slate-200 bg-slate-50 text-sm font-semibold text-slate-800 outline-none focus:bg-white focus:border-[#0284c7]"
@@ -310,6 +310,7 @@ export function EditKandangModal({
               type="number"
               required
               min="10"
+              placeholder="Kapasitas Kandang"
               value={kapasitas}
               onChange={(e) => setKapasitas(e.target.value)}
               className="w-full h-11 px-3 rounded-xl border border-slate-200 bg-slate-50 text-sm font-semibold text-slate-800 outline-none focus:bg-white focus:border-[#0284c7]"
@@ -325,6 +326,7 @@ export function EditKandangModal({
               type="number"
               required
               min="1"
+              placeholder="Kapasitas Awal"
               value={populasiAwal}
               onChange={(e) => setPopulasiAwal(e.target.value)}
               className="w-full h-11 px-3 rounded-xl border border-slate-200 bg-slate-50 text-sm font-semibold text-slate-800 outline-none focus:bg-white focus:border-[#0284c7]"
@@ -370,7 +372,7 @@ export function EditKandangModal({
             </label>
             <input
               type="text"
-              placeholder="Contoh: LAYER LOHMANN"
+              placeholder="Jenis Ayam"
               value={jenis}
               onChange={(e) => setJenis(e.target.value)}
               className="w-full h-11 px-3 rounded-xl border border-slate-200 bg-slate-50 text-sm font-semibold text-slate-800 outline-none focus:bg-white focus:border-[#0284c7]"
@@ -389,7 +391,7 @@ export function EditKandangModal({
               max="100"
               value={umurMasukMgg}
               onChange={(e) => handleUmurMasukChange(e.target.value)}
-              placeholder="18"
+              placeholder="Umur Saat Masuk"
               className="w-full h-11 px-3 rounded-xl border border-slate-200 bg-slate-50 text-sm font-semibold text-slate-800 outline-none focus:bg-white focus:border-[#0284c7]"
             />
             <span className="text-[10px] text-slate-400 mt-0.5 block">Standar pullet: 18 mgg</span>
@@ -405,6 +407,7 @@ export function EditKandangModal({
               required
               min="1"
               max="150"
+              placeholder="Umur Saat Ini"
               value={umurMgg}
               onChange={(e) => setUmurMgg(e.target.value)}
               className="w-full h-11 px-3 rounded-xl border border-sky-300 bg-sky-50/50 text-sm font-bold text-[#0369a1] outline-none focus:bg-white focus:border-[#0284c7]"

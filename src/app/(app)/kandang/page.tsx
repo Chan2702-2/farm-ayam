@@ -38,6 +38,7 @@ export default function KandangPage() {
   // Modals
   const [showAddModal, setShowAddModal] = useState(false);
   const [showAddBranchModal, setShowAddBranchModal] = useState(false);
+  const [showFabMenu, setShowFabMenu] = useState(false);
   const [editingCage, setEditingCage] = useState<FarmCageData | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
@@ -52,12 +53,12 @@ export default function KandangPage() {
   const [newTipe, setNewTipe] = useState<'KAWAT' | 'KAYU'>('KAWAT');
   const [newOperator, setNewOperator] = useState('');
   const [newPhone, setNewPhone] = useState('');
-  const [newKapasitas, setNewKapasitas] = useState('4000');
-  const [newPopulasiAwal, setNewPopulasiAwal] = useState('4000');
+  const [newKapasitas, setNewKapasitas] = useState('');
+  const [newPopulasiAwal, setNewPopulasiAwal] = useState('');
   const [newTanggalMasuk, setNewTanggalMasuk] = useState(() => new Date().toISOString().split('T')[0]);
-  const [newUmurMasukMgg, setNewUmurMasukMgg] = useState('18');
-  const [newUmurMgg, setNewUmurMgg] = useState('18');
-  const [newJenis, setNewJenis] = useState('LAYER LOHMANN');
+  const [newUmurMasukMgg, setNewUmurMasukMgg] = useState('');
+  const [newUmurMgg, setNewUmurMgg] = useState('');
+  const [newJenis, setNewJenis] = useState('');
 
   const getElapsedWeeks = (dateStr: string) => {
     if (!dateStr) return 0;
@@ -75,15 +76,17 @@ export default function KandangPage() {
   const handleTanggalMasukChange = (dateVal: string) => {
     setNewTanggalMasuk(dateVal);
     const elapsed = getElapsedWeeks(dateVal);
-    const baseAge = Number(newUmurMasukMgg) || 18;
-    setNewUmurMgg(String(baseAge + elapsed));
+    const baseAge = Number(newUmurMasukMgg) || 0;
+    if (newUmurMasukMgg) {
+      setNewUmurMgg(String(baseAge + elapsed));
+    }
   };
 
   const handleUmurMasukChange = (val: string) => {
     setNewUmurMasukMgg(val);
     const elapsed = getElapsedWeeks(newTanggalMasuk);
     const baseAge = Number(val) || 0;
-    setNewUmurMgg(String(baseAge + elapsed));
+    setNewUmurMgg(val ? String(baseAge + elapsed) : '');
   };
 
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
@@ -241,11 +244,12 @@ export default function KandangPage() {
     setNewNama('');
     setNewOperator('');
     setNewPhone('');
-    setNewKapasitas('4000');
-    setNewPopulasiAwal('4000');
+    setNewKapasitas('');
+    setNewPopulasiAwal('');
     setNewTanggalMasuk(new Date().toISOString().split('T')[0]);
-    setNewUmurMasukMgg('18');
-    setNewUmurMgg('18');
+    setNewUmurMasukMgg('');
+    setNewUmurMgg('');
+    setNewJenis('');
     setToastMessage(`Kandang "${newCage.name}" berhasil ditambahkan & disinkronkan ke Spreadsheet!`);
     markDataDirty();
     performAutoSync();
@@ -306,33 +310,6 @@ export default function KandangPage() {
           <p className="text-xs text-slate-500 font-medium">
             {cages.length} Kandang Terdaftar &bull; {totalAyam.toLocaleString('id-ID')} Total Ekor
           </p>
-        </div>
-
-        <div className="flex items-center gap-1.5">
-          <button
-            onClick={() => setShowAddBranchModal(true)}
-            className="flex items-center gap-1 px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-all active:scale-95"
-            title="Tambah Cabang Peternakan"
-          >
-            <Building2 className="w-4 h-4 text-slate-500" />
-            <span className="hidden xs:inline">+ Cabang</span>
-            <span className="xs:hidden">+ Cabang</span>
-          </button>
-
-          <button
-            onClick={() => {
-              if (branches.length === 0) {
-                setShowAddBranchModal(true);
-              } else {
-                setShowAddModal(true);
-              }
-            }}
-            className="flex items-center gap-1 px-3 py-2 rounded-xl bg-[#0284c7] hover:bg-[#0369a1] text-white text-xs font-bold shadow-sm shadow-sky-600/25 active:scale-95 transition-all"
-            title="Tambah Unit Kandang"
-          >
-            <Plus className="w-4 h-4" />
-            <span>+ Kandang</span>
-          </button>
         </div>
       </div>
 
@@ -487,18 +464,92 @@ export default function KandangPage() {
         )}
       </div>
 
-      {/* Floating Action Button (FAB) */}
-      {branches.length > 0 && (
-        <div className="fixed right-4 bottom-20 z-30 flex flex-col gap-2 items-end">
-          <button
-            onClick={() => setShowAddModal(true)}
-            className="flex items-center gap-2 pl-4 pr-5 py-3 rounded-full bg-[#0284c7] hover:bg-[#0369a1] text-white font-bold text-xs shadow-lg shadow-sky-600/35 active:scale-95 transition-all"
-          >
-            <Plus className="w-5 h-5" />
-            <span>Tambah Kandang</span>
-          </button>
-        </div>
-      )}
+      {/* Floating Action Button (FAB) Speed Dial */}
+      <div className="fixed right-4 bottom-20 z-40 flex flex-col gap-2.5 items-end">
+        {/* Backdrop for click outside */}
+        {showFabMenu && (
+          <div
+            onClick={() => setShowFabMenu(false)}
+            className="fixed inset-0 bg-slate-900/25 backdrop-blur-[1px] z-30 transition-opacity animate-in fade-in"
+          />
+        )}
+
+        {/* Speed Dial Menu Options */}
+        {showFabMenu && (
+          <div className="flex flex-col gap-2 items-end z-40 animate-in fade-in slide-in-from-bottom-3 duration-200">
+            {/* Opsi + Cabang */}
+            <button
+              type="button"
+              onClick={() => {
+                setShowFabMenu(false);
+                setShowAddBranchModal(true);
+              }}
+              className="flex items-center gap-2.5 pl-3.5 pr-4 py-2.5 rounded-2xl bg-white text-slate-800 border border-slate-200/80 hover:bg-slate-50 font-bold text-xs shadow-xl active:scale-95 transition-all group"
+            >
+              <div className="w-7 h-7 rounded-xl bg-amber-50 group-hover:bg-amber-100 text-amber-600 flex items-center justify-center transition-colors">
+                <Building2 className="w-4 h-4" />
+              </div>
+              <div className="text-left">
+                <span className="block font-jakarta font-bold text-slate-900 text-xs">
+                  Cabang
+                </span>
+                <span className="block text-[10px] text-slate-400 font-normal">
+                  Daftarkan cabang baru
+                </span>
+              </div>
+            </button>
+
+            {/* Opsi + Kandang */}
+            <button
+              type="button"
+              onClick={() => {
+                setShowFabMenu(false);
+                if (branches.length === 0) {
+                  setShowAddBranchModal(true);
+                } else {
+                  setShowAddModal(true);
+                }
+              }}
+              className="flex items-center gap-2.5 pl-3.5 pr-4 py-2.5 rounded-2xl bg-white text-slate-800 border border-slate-200/80 hover:bg-slate-50 font-bold text-xs shadow-xl active:scale-95 transition-all group"
+            >
+              <div className="w-7 h-7 rounded-xl bg-sky-50 group-hover:bg-sky-100 text-[#0284c7] flex items-center justify-center transition-colors">
+                <Warehouse className="w-4 h-4" />
+              </div>
+              <div className="text-left">
+                <span className="block font-jakarta font-bold text-slate-900 text-xs">
+                  Kandang
+                </span>
+                <span className="block text-[10px] text-slate-400 font-normal">
+                  Tambah unit kandang baru
+                </span>
+              </div>
+            </button>
+          </div>
+        )}
+
+        {/* Main Floating Trigger Button */}
+        <button
+          type="button"
+          onClick={() => setShowFabMenu(!showFabMenu)}
+          className={`flex items-center gap-2 pl-4 pr-5 py-3.5 rounded-full text-white font-bold text-xs shadow-xl active:scale-95 transition-all z-40 ${
+            showFabMenu
+              ? 'bg-slate-800 hover:bg-slate-900 shadow-slate-900/30'
+              : 'bg-[#0284c7] hover:bg-[#0369a1] shadow-sky-600/35'
+          }`}
+        >
+          {showFabMenu ? (
+            <>
+              <X className="w-4 h-4" />
+              <span>Tutup</span>
+            </>
+          ) : (
+            <>
+              <Plus className="w-4 h-4" />
+              <span>Tambah</span>
+            </>
+          )}
+        </button>
+      </div>
 
       {/* Modal Tambah Cabang */}
       <Modal
@@ -516,7 +567,7 @@ export default function KandangPage() {
             <input
               type="text"
               required
-              placeholder="Contoh: Cabang 3 Alur (Pusat)"
+              placeholder="Nama Cabang"
               value={branchName}
               onChange={(e) => setBranchName(e.target.value)}
               className="w-full h-11 px-3 rounded-xl border border-slate-200 bg-slate-50 text-sm font-semibold text-slate-800 outline-none focus:bg-white focus:border-[#0284c7]"
@@ -531,7 +582,7 @@ export default function KandangPage() {
               <input
                 type="text"
                 required
-                placeholder="Contoh: 3-ALUR"
+                placeholder="Kode Cabang"
                 value={branchCode}
                 onChange={(e) => setBranchCode(e.target.value)}
                 className="w-full h-11 px-3 rounded-xl border border-slate-200 bg-slate-50 text-sm font-semibold text-slate-800 outline-none focus:bg-white focus:border-[#0284c7] uppercase"
@@ -544,7 +595,7 @@ export default function KandangPage() {
               </label>
               <input
                 type="text"
-                placeholder="Contoh: Sukamaju Blok A"
+                placeholder="Lokasi / Blok"
                 value={branchLocation}
                 onChange={(e) => setBranchLocation(e.target.value)}
                 className="w-full h-11 px-3 rounded-xl border border-slate-200 bg-slate-50 text-sm font-semibold text-slate-800 outline-none focus:bg-white focus:border-[#0284c7]"
@@ -652,7 +703,7 @@ export default function KandangPage() {
               <input
                 type="text"
                 required
-                placeholder="Contoh: KAWAT-01"
+                placeholder="Nama / Penomoran"
                 value={newNama}
                 onChange={(e) => setNewNama(e.target.value)}
                 className="w-full h-11 px-3 rounded-xl border border-slate-200 bg-slate-50 text-sm font-semibold text-slate-800 outline-none focus:bg-white focus:border-[#0284c7]"
@@ -681,7 +732,7 @@ export default function KandangPage() {
               </label>
               <input
                 type="tel"
-                placeholder="Contoh: 081234567890"
+                placeholder="No HP / WhatsApp Petugas"
                 value={newPhone}
                 onChange={(e) => setNewPhone(e.target.value)}
                 className="w-full h-11 px-3 rounded-xl border border-slate-200 bg-slate-50 text-sm font-semibold text-slate-800 outline-none focus:bg-white focus:border-[#0284c7]"
@@ -698,7 +749,7 @@ export default function KandangPage() {
                 type="number"
                 required
                 min="10"
-                placeholder="4000"
+                placeholder="Kapasitas Kandang"
                 value={newKapasitas}
                 onChange={(e) => {
                   const val = e.target.value;
@@ -720,7 +771,7 @@ export default function KandangPage() {
                 type="number"
                 required
                 min="1"
-                placeholder="4000"
+                placeholder="Kapasitas Awal"
                 value={newPopulasiAwal}
                 onChange={(e) => setNewPopulasiAwal(e.target.value)}
                 className="w-full h-11 px-3 rounded-xl border border-slate-200 bg-slate-50 text-sm font-semibold text-slate-800 outline-none focus:bg-white focus:border-[#0284c7]"
@@ -749,7 +800,7 @@ export default function KandangPage() {
               </label>
               <input
                 type="text"
-                placeholder="Contoh: LAYER LOHMANN"
+                placeholder="Jenis Ayam"
                 value={newJenis}
                 onChange={(e) => setNewJenis(e.target.value)}
                 className="w-full h-11 px-3 rounded-xl border border-slate-200 bg-slate-50 text-sm font-semibold text-slate-800 outline-none focus:bg-white focus:border-[#0284c7]"
@@ -768,7 +819,7 @@ export default function KandangPage() {
                 max="100"
                 value={newUmurMasukMgg}
                 onChange={(e) => handleUmurMasukChange(e.target.value)}
-                placeholder="18"
+                placeholder="Umur Saat Masuk"
                 className="w-full h-11 px-3 rounded-xl border border-slate-200 bg-slate-50 text-sm font-semibold text-slate-800 outline-none focus:bg-white focus:border-[#0284c7]"
               />
               <span className="text-[10px] text-slate-400 mt-0.5 block">Standar pullet: 18 mgg</span>
@@ -784,6 +835,7 @@ export default function KandangPage() {
                 required
                 min="1"
                 max="150"
+                placeholder="Umur Saat Ini"
                 value={newUmurMgg}
                 onChange={(e) => setNewUmurMgg(e.target.value)}
                 className="w-full h-11 px-3 rounded-xl border border-sky-300 bg-sky-50/50 text-sm font-bold text-[#0369a1] outline-none focus:bg-white focus:border-[#0284c7]"

@@ -240,7 +240,7 @@ export function UserManagerModal({ isOpen, onClose, onSuccessToast }: UserManage
                 <input
                   type="text"
                   required
-                  placeholder="Contoh: Budi Santoso"
+                  placeholder="Nama Lengkap"
                   value={newName}
                   onChange={(e) => setNewName(e.target.value)}
                   className="w-full h-10 px-3 rounded-xl bg-white border border-slate-200 text-xs font-medium focus:outline-none focus:border-amber-500"

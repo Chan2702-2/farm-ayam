@@ -147,14 +147,15 @@ export async function pullDataFromSheets(force: boolean = false): Promise<{
     if (Array.isArray(branches) && branches.length > 0) {
       saveFarmBranches(branches);
       const active = getActiveBranchId();
-      if (!active || active === 'all' || !branches.some((b: any) => b.id === active)) {
-        setActiveBranchId(branches[0].id);
+      // Hanya ganti activeBranch jika activeBranch tidak valid
+      if (active && active !== 'all' && !branches.some((b: any) => b.id === active)) {
+        setActiveBranchId('all');
       }
       updated = true;
     }
 
     // 2. Simpan Kandang dari Google Sheets jika ada
-    if (Array.isArray(cages) && cages.length > 0) {
+    if (Array.isArray(cages)) {
       saveFarmCages(cages);
       updated = true;
     }
@@ -264,24 +265,7 @@ export async function performAutoSync(force: boolean = false): Promise<{ success
 
     savePendingQueue(remainingQueue);
 
-    // 2. Sinkronkan Master Data ke Google Sheets (hanya jika ada cabang lokal)
-    if (localBranches.length > 0) {
-      const users = getAuthUsers();
-      const user = getCurrentUser();
-
-      await fetch('/api/sheets/sync-master', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          branches: localBranches,
-          cages: localCages,
-          users,
-          userName: user?.name || 'AutoSync Sistem',
-        }),
-      });
-    }
-
-    // 3. Tarik kembali data terbaru dari spreadsheet untuk memastikan keselarasan
+    // 2. Tarik data terbaru dari Google Sheets untuk memastikan sinkronisasi dengan perangkat lain
     await pullDataFromSheets();
 
     // Jika semua antrean berhasil diproses
