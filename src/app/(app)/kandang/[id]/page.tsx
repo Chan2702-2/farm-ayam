@@ -164,7 +164,7 @@ export default function KandangDetailPage() {
                 </span>
               </div>
               <p className="text-xs text-slate-500 font-medium mt-0.5">
-                Kapasitas {cage.kapasitas?.toLocaleString('id-ID') || 0} &bull; Masuk: {cage.tanggalMasuk || '-'}
+                Kapasitas {cage.kapasitas?.toLocaleString('id-ID') || 0} ekor &bull; Awal: {cage.populasiAwal?.toLocaleString('id-ID') || cage.kapasitas?.toLocaleString('id-ID') || 0} &bull; Masuk: {cage.tanggalMasuk || '-'}
               </p>
             </div>
           </div>
@@ -183,15 +183,35 @@ export default function KandangDetailPage() {
               <p className="text-xs font-bold text-slate-800 truncate">
                 {cage.operator || '-'}
               </p>
+              {cage.phone ? (
+                <p className="text-[11px] font-semibold text-sky-700 truncate mt-0.5">
+                  {cage.phone}
+                </p>
+              ) : (
+                <p className="text-[10px] text-slate-400 italic">No HP belum diatur</p>
+              )}
             </div>
           </div>
-          <a
-            href="tel:08123456789"
-            className="w-8 h-8 rounded-full bg-white text-[#0284c7] shadow-xs flex items-center justify-center hover:bg-sky-100 transition-colors"
-            title="Hubungi Operator"
-          >
-            <Phone className="w-4 h-4" />
-          </a>
+          {cage.phone ? (
+            <div className="flex items-center gap-1.5 shrink-0">
+              <a
+                href={`https://wa.me/${cage.phone.replace(/[^0-9]/g, '').replace(/^0/, '62')}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[11px] flex items-center gap-1 shadow-xs transition-colors"
+                title="Chat WhatsApp Operator"
+              >
+                <span>WA</span>
+              </a>
+              <a
+                href={`tel:${cage.phone}`}
+                className="w-8 h-8 rounded-full bg-white text-[#0284c7] shadow-xs flex items-center justify-center hover:bg-sky-100 transition-colors border border-sky-100"
+                title="Telepon Operator"
+              >
+                <Phone className="w-4 h-4" />
+              </a>
+            </div>
+          ) : null}
         </div>
 
         {/* 3-col vitals grid */}

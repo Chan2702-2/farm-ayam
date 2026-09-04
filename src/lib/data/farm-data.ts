@@ -23,6 +23,7 @@ export interface FarmCageData {
   fullName: string;
   name: string;
   operator: string;
+  phone?: string;
   kapasitas: number;
   populasiAwal: number;
   populasiHidup: number;

@@ -49,7 +49,9 @@ export default function KandangPage() {
   const [newNama, setNewNama] = useState('');
   const [newTipe, setNewTipe] = useState<'KAWAT' | 'KAYU'>('KAWAT');
   const [newOperator, setNewOperator] = useState('');
+  const [newPhone, setNewPhone] = useState('');
   const [newKapasitas, setNewKapasitas] = useState('4000');
+  const [newPopulasiAwal, setNewPopulasiAwal] = useState('4000');
   const [newTanggalMasuk, setNewTanggalMasuk] = useState(() => new Date().toISOString().split('T')[0]);
   const [newUmurMasukMgg, setNewUmurMasukMgg] = useState('18');
   const [newUmurMgg, setNewUmurMgg] = useState('18');
@@ -189,6 +191,7 @@ export default function KandangPage() {
     const branchCages = allCages.filter((c) => c.branchId === branchObj.id);
     const nextIndex = branchCages.length + 1;
     const kap = Number(newKapasitas) || 4000;
+    const popAwal = Number(newPopulasiAwal) || kap;
 
     const newCage: FarmCageData = {
       id: `cage-${Date.now()}`,
@@ -198,9 +201,10 @@ export default function KandangPage() {
       fullName: `${nextIndex}. ${newNama} (${newOperator.toUpperCase()})`,
       name: `${nextIndex}. ${newNama}`,
       operator: newOperator.toUpperCase(),
+      phone: newPhone.trim() || undefined,
       kapasitas: kap,
-      populasiAwal: kap,
-      populasiHidup: kap,
+      populasiAwal: popAwal,
+      populasiHidup: popAwal,
       mati: 0,
       afkir: 0,
       mutasiKeluar: 0,
@@ -234,6 +238,9 @@ export default function KandangPage() {
     setShowAddModal(false);
     setNewNama('');
     setNewOperator('');
+    setNewPhone('');
+    setNewKapasitas('4000');
+    setNewPopulasiAwal('4000');
     setNewTanggalMasuk(new Date().toISOString().split('T')[0]);
     setNewUmurMasukMgg('18');
     setNewUmurMgg('18');
@@ -253,6 +260,7 @@ export default function KandangPage() {
           branchName: newCage.branchName,
           name: newCage.name,
           operator: newCage.operator,
+          phone: newCage.phone,
           jenis: newCage.jenis,
           tipe: newCage.tipe,
           kapasitas: newCage.kapasitas,
@@ -646,35 +654,76 @@ export default function KandangPage() {
             </div>
           </div>
 
-          <div>
-            <label className="block text-xs font-semibold text-slate-600 mb-1">
-              Nama Operator Bertugas <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="text"
-              required
-              placeholder="Nama Petugas"
-              value={newOperator}
-              onChange={(e) => setNewOperator(e.target.value)}
-              className="w-full h-11 px-3 rounded-xl border border-slate-200 bg-slate-50 text-sm font-semibold text-slate-800 outline-none focus:bg-white focus:border-[#0284c7]"
-            />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-semibold text-slate-600 mb-1">
+                Nama Operator Bertugas <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                required
+                placeholder="Nama Petugas"
+                value={newOperator}
+                onChange={(e) => setNewOperator(e.target.value)}
+                className="w-full h-11 px-3 rounded-xl border border-slate-200 bg-slate-50 text-sm font-semibold text-slate-800 outline-none focus:bg-white focus:border-[#0284c7]"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-600 mb-1">
+                No HP / WhatsApp Petugas
+              </label>
+              <input
+                type="tel"
+                placeholder="Contoh: 081234567890"
+                value={newPhone}
+                onChange={(e) => setNewPhone(e.target.value)}
+                className="w-full h-11 px-3 rounded-xl border border-slate-200 bg-slate-50 text-sm font-semibold text-slate-800 outline-none focus:bg-white focus:border-[#0284c7]"
+              />
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-semibold text-slate-600 mb-1">
-                Kapasitas (Ekor) <span className="text-red-500">*</span>
+                Kapasitas Kandang (Ekor) <span className="text-red-500">*</span>
               </label>
               <input
                 type="number"
                 required
                 min="10"
+                placeholder="4000"
                 value={newKapasitas}
-                onChange={(e) => setNewKapasitas(e.target.value)}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setNewKapasitas(val);
+                  if (!newPopulasiAwal || newPopulasiAwal === newKapasitas) {
+                    setNewPopulasiAwal(val);
+                  }
+                }}
                 className="w-full h-11 px-3 rounded-xl border border-slate-200 bg-slate-50 text-sm font-semibold text-slate-800 outline-none focus:bg-white focus:border-[#0284c7]"
               />
+              <span className="text-[10px] text-slate-400 mt-0.5 block">Daya tampung maksimal</span>
             </div>
 
+            <div>
+              <label className="block text-xs font-semibold text-slate-600 mb-1">
+                Kapasitas Awal (Ekor) <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="number"
+                required
+                min="1"
+                placeholder="4000"
+                value={newPopulasiAwal}
+                onChange={(e) => setNewPopulasiAwal(e.target.value)}
+                className="w-full h-11 px-3 rounded-xl border border-slate-200 bg-slate-50 text-sm font-semibold text-slate-800 outline-none focus:bg-white focus:border-[#0284c7]"
+              />
+              <span className="text-[10px] text-slate-400 mt-0.5 block">Jumlah ayam saat masuk</span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-semibold text-slate-600 mb-1">
                 Tanggal Masuk Ayam <span className="text-red-500">*</span>
@@ -684,6 +733,19 @@ export default function KandangPage() {
                 required
                 value={newTanggalMasuk}
                 onChange={(e) => handleTanggalMasukChange(e.target.value)}
+                className="w-full h-11 px-3 rounded-xl border border-slate-200 bg-slate-50 text-sm font-semibold text-slate-800 outline-none focus:bg-white focus:border-[#0284c7]"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-600 mb-1">
+                Jenis Ayam
+              </label>
+              <input
+                type="text"
+                placeholder="Contoh: LAYER LOHMANN"
+                value={newJenis}
+                onChange={(e) => setNewJenis(e.target.value)}
                 className="w-full h-11 px-3 rounded-xl border border-slate-200 bg-slate-50 text-sm font-semibold text-slate-800 outline-none focus:bg-white focus:border-[#0284c7]"
               />
             </div>
@@ -726,19 +788,6 @@ export default function KandangPage() {
                   : 'Sesuai tgl masuk'}
               </span>
             </div>
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-slate-600 mb-1">
-              Jenis Ayam
-            </label>
-            <input
-              type="text"
-              placeholder="Contoh: LAYER LOHMANN"
-              value={newJenis}
-              onChange={(e) => setNewJenis(e.target.value)}
-              className="w-full h-11 px-3 rounded-xl border border-slate-200 bg-slate-50 text-sm font-semibold text-slate-800 outline-none focus:bg-white focus:border-[#0284c7]"
-            />
           </div>
 
           <div className="pt-2 flex gap-2">

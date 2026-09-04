@@ -108,7 +108,10 @@ export function getLastSyncTime(): string | null {
  * Tarik data terbaru dari Google Sheets ke memori browser / laptop.
  * Menjamin saat login di laptop, seluruh cabang dan kandang yang di-input di HP langsung tampil!
  */
-export async function pullDataFromSheets(): Promise<{
+let lastPullTime = 0;
+const PULL_COOLDOWN_MS = 15000; // Cooldown 15 detik untuk menghemat kuota Google Sheets API
+
+export async function pullDataFromSheets(force: boolean = false): Promise<{
   success: boolean;
   branchesCount?: number;
   cagesCount?: number;
@@ -121,6 +124,12 @@ export async function pullDataFromSheets(): Promise<{
   if (!navigator.onLine) {
     return { success: false, message: 'offline' };
   }
+
+  const now = Date.now();
+  if (!force && now - lastPullTime < PULL_COOLDOWN_MS) {
+    return { success: true, message: 'throttled' };
+  }
+  lastPullTime = now;
 
   try {
     console.log('[AutoSync] Menarik data terbaru dari Google Sheets ke perangkat ini...');

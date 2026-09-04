@@ -46,8 +46,24 @@ export async function GET(req: NextRequest) {
       });
 
     // 2. Ambil data Master Kandang
-    const kandangRaw = await readSheetValues('Master Kandang', 'A2:O2000');
-    const cages: FarmCageData[] = (kandangRaw || [])
+    const kandangRawAll = await readSheetValues('Master Kandang', 'A1:P2000');
+    let cageRows: string[][] = [];
+    let hasPhoneColumn = false;
+
+    if (Array.isArray(kandangRawAll) && kandangRawAll.length > 0) {
+      const headerRow = (kandangRawAll[0] || []).map((h) => String(h || '').trim().toLowerCase());
+      const isHeader = headerRow.some((h) => h.includes('kandang') || h.includes('timestamp'));
+      if (isHeader) {
+        hasPhoneColumn = headerRow.some(
+          (h) => h.includes('hp') || h.includes('phone') || h.includes('wa') || h.includes('telepon')
+        );
+        cageRows = kandangRawAll.slice(1);
+      } else {
+        cageRows = kandangRawAll;
+      }
+    }
+
+    const cages: FarmCageData[] = cageRows
       .filter((r) => r[1] && r[4]) // Memiliki ID dan Nama Kandang
       .map((r, i) => {
         const id = r[1];
@@ -55,13 +71,40 @@ export async function GET(req: NextRequest) {
         const branchName = r[3] || branches[0]?.name || 'Cabang';
         const name = r[4];
         const operator = r[5] || '-';
-        const jenis = r[6] || 'LAYER';
-        const tipe = r[7] || 'KAWAT';
-        const kapasitas = Number(r[8]) || 4000;
-        const populasiAwal = Number(r[9]) || kapasitas;
-        const populasiHidup = Number(r[10]) || kapasitas;
-        const umurMgg = Number(r[11]) || 30;
-        const tanggalMasuk = r[12] || new Date().toISOString().split('T')[0];
+
+        let phone: string | undefined = undefined;
+        let jenis = 'LAYER';
+        let tipe = 'KAWAT';
+        let kapasitas = 4000;
+        let populasiAwal = 4000;
+        let populasiHidup = 4000;
+        let umurMgg = 30;
+        let tanggalMasuk = new Date().toISOString().split('T')[0];
+
+        const val6 = (r[6] || '').trim();
+        const looksLikePhone =
+          val6.startsWith('08') ||
+          val6.startsWith('+') ||
+          (val6.length >= 7 && /^[0-9+-\s()]+$/.test(val6));
+
+        if (hasPhoneColumn || looksLikePhone) {
+          phone = val6 && val6 !== '-' ? val6 : undefined;
+          jenis = r[7] || 'LAYER';
+          tipe = r[8] || 'KAWAT';
+          kapasitas = Number(r[9]) || 4000;
+          populasiAwal = Number(r[10]) || kapasitas;
+          populasiHidup = Number(r[11]) || kapasitas;
+          umurMgg = Number(r[12]) || 30;
+          tanggalMasuk = r[13] || new Date().toISOString().split('T')[0];
+        } else {
+          jenis = r[6] || 'LAYER';
+          tipe = r[7] || 'KAWAT';
+          kapasitas = Number(r[8]) || 4000;
+          populasiAwal = Number(r[9]) || kapasitas;
+          populasiHidup = Number(r[10]) || kapasitas;
+          umurMgg = Number(r[11]) || 30;
+          tanggalMasuk = r[12] || new Date().toISOString().split('T')[0];
+        }
 
         return {
           id,
@@ -71,6 +114,7 @@ export async function GET(req: NextRequest) {
           fullName: `${name} (${operator})`,
           name,
           operator,
+          phone,
           kapasitas,
           populasiAwal,
           populasiHidup,

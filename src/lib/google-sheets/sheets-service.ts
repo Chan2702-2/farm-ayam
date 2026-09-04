@@ -79,6 +79,7 @@ export interface CageSheetRow {
   branchName: string;
   name: string;
   operator?: string;
+  phone?: string;
   jenis?: string;
   tipe?: string;
   kapasitas?: number;
@@ -188,6 +189,7 @@ export const KANDANG_HEADERS = [
   'Nama Cabang',
   'Nama Unit Kandang',
   'Operator / PJ',
+  'No HP Petugas',
   'Jenis Ayam',
   'Konstruksi / Tipe',
   'Kapasitas (Ekor)',
@@ -530,10 +532,10 @@ export async function syncMasterKandang(rows: CageSheetRow[], userName: string =
   const spreadsheetId = getGoogleSheetId();
   const nowStr = new Date().toLocaleString('id-ID');
 
-  // Bersihkan data baris sebelumnya (A2:O)
+  // Bersihkan data baris sebelumnya (A2:P)
   await sheets.spreadsheets.values.clear({
     spreadsheetId,
-    range: `'${sheetTitle}'!A2:O2000`,
+    range: `'${sheetTitle}'!A2:P2000`,
   });
 
   if (rows.length === 0) return;
@@ -545,6 +547,7 @@ export async function syncMasterKandang(rows: CageSheetRow[], userName: string =
     c.branchName,
     c.name,
     c.operator || '-',
+    c.phone || '-',
     c.jenis || 'LAYER LOHMANN',
     c.tipe || 'KAWAT',
     c.kapasitas ?? 0,
@@ -576,7 +579,7 @@ export async function appendKandangRow(cage: CageSheetRow, userName: string = 'A
 
   return sheets.spreadsheets.values.append({
     spreadsheetId,
-    range: `'${sheetTitle}'!A:O`,
+    range: `'${sheetTitle}'!A:P`,
     valueInputOption: 'USER_ENTERED',
     insertDataOption: 'INSERT_ROWS',
     requestBody: {
@@ -588,6 +591,7 @@ export async function appendKandangRow(cage: CageSheetRow, userName: string = 'A
           cage.branchName,
           cage.name,
           cage.operator || '-',
+          cage.phone || '-',
           cage.jenis || 'LAYER LOHMANN',
           cage.tipe || 'KAWAT',
           cage.kapasitas ?? 0,

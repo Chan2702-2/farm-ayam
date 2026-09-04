@@ -78,6 +78,11 @@ export function KandangCard({ cage }: KandangCardProps) {
             <p className="text-[11px] text-slate-500 truncate flex items-center gap-1 mt-0.5">
               <User className="w-3 h-3 text-slate-400 shrink-0" />
               <span className="truncate">{cage.operator}</span>
+              {cage.phone && (
+                <span className="text-[10px] text-slate-400 font-normal truncate">
+                  &bull; {cage.phone}
+                </span>
+              )}
             </p>
           </div>
         </div>
