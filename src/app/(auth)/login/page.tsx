@@ -55,13 +55,18 @@ export default function LoginPage() {
         return;
       }
 
+      const clean = username.trim().toLowerCase();
+      const cleanPass = password.trim();
+
       // Check client-side registered users
       const localUsers = getAuthUsers();
       const matchedLocal = localUsers.find(
         (u) =>
-          (u.username.toLowerCase() === username.trim().toLowerCase() ||
-           u.email.toLowerCase() === username.trim().toLowerCase()) &&
-          u.passwordHash === password.trim()
+          (u.username.toLowerCase() === clean ||
+           u.email.toLowerCase() === clean ||
+           u.email.toLowerCase() === `${clean}@farm.com` ||
+           u.username.toLowerCase() === `${clean}@farm.com`) &&
+          u.passwordHash === cleanPass
       );
 
       if (matchedLocal) {
@@ -159,7 +164,7 @@ export default function LoginPage() {
                   type="text"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  placeholder="Contoh: mulia@farm.com"
+                  placeholder="username"
                   className="w-full h-11 pl-10 pr-4 rounded-xl bg-slate-50 border border-slate-200 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-[#0284c7] focus:bg-white transition-all font-medium"
                   required
                 />

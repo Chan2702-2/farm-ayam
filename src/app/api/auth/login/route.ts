@@ -21,7 +21,9 @@ export async function POST(request: NextRequest) {
     const user = initialUsers.find(
       (u) =>
         u.username.toLowerCase() === cleanInput ||
-        u.email.toLowerCase() === cleanInput
+        u.email.toLowerCase() === cleanInput ||
+        u.email.toLowerCase() === `${cleanInput}@farm.com` ||
+        u.username.toLowerCase() === `${cleanInput}@farm.com`
     );
 
     if (!user) {
