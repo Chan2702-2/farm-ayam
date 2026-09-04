@@ -31,7 +31,8 @@ import {
   LaporanKpiStrip,
   LphExportModal,
   LphImportModal,
-  LaporanFilterBar
+  LaporanFilterBar,
+  GoogleSheetsModal
 } from '@/components/laporan';
 import { getCurrentUser, filterCagesForUser, filterFeedForUser, AuthUser } from '@/lib/data/auth-users';
 
@@ -44,6 +45,7 @@ export default function LaporanPage() {
   const [selectedDate, setSelectedDate] = useState('2026-09-03');
   const [showExportModal, setShowExportModal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
+  const [showSheetsModal, setShowSheetsModal] = useState(false);
   const [exportingPakan, setExportingPakan] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
@@ -137,6 +139,16 @@ export default function LaporanPage() {
         </div>
 
         <div className="flex items-center gap-1.5">
+          <button
+            onClick={() => setShowSheetsModal(true)}
+            className="flex items-center gap-1 px-2.5 sm:px-3 py-2 rounded-xl bg-teal-50 hover:bg-teal-100 text-teal-700 text-xs font-bold border border-teal-200/80 active:scale-95 transition-all"
+            title="Integrasi Google Sheets (Drive)"
+          >
+            <FileSpreadsheet className="w-4 h-4 text-teal-600" />
+            <span className="hidden sm:inline">Google</span>
+            <span>Sheets</span>
+          </button>
+
           <button
             onClick={() => setShowImportModal(true)}
             className="flex items-center gap-1 px-2.5 sm:px-3 py-2 rounded-xl bg-sky-50 hover:bg-sky-100 text-[#0284c7] text-xs font-bold border border-sky-200/80 active:scale-95 transition-all"
@@ -354,6 +366,19 @@ export default function LaporanPage() {
         isOpen={showImportModal}
         onClose={() => setShowImportModal(false)}
         onSuccess={handleImportSuccess}
+      />
+
+      {/* Google Sheets Integration Modal */}
+      <GoogleSheetsModal
+        isOpen={showSheetsModal}
+        onClose={() => setShowSheetsModal(false)}
+        cages={cages}
+        feedItems={feedItems}
+        selectedDate={selectedDate}
+        onSuccessToast={(msg) => {
+          setToastMessage(msg);
+          setTimeout(() => setToastMessage(null), 3500);
+        }}
       />
 
       {/* Toast Notification */}

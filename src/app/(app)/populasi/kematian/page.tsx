@@ -15,6 +15,8 @@ import {
 } from 'lucide-react';
 import { getFarmCages, saveFarmCages, getCageById, FarmCageData } from '@/lib/data/farm-data';
 import { Modal } from '@/components/ui/Modal';
+import { getCurrentUser } from '@/lib/data/auth-users';
+import { addActivityLog } from '@/lib/data/activity-log';
 
 export default function CatatKematianPage() {
   const router = useRouter();
@@ -73,6 +75,38 @@ export default function CatatKematianPage() {
 
     setCages(updated);
     saveFarmCages(updated);
+
+    const user = getCurrentUser();
+    addActivityLog({
+      userName: user?.name || 'Pengawas Lapangan',
+      userRole: user?.role || 'PENGAWAS',
+      branchId: selectedCage.branchId,
+      branchName: selectedCage.branchName,
+      actionType: 'MORTALITAS',
+      title: `Catat Kematian ${selectedCage.name}`,
+      description: `Mencatat ${mati} ekor mati (${penyebab}). Sisa populasi: ${sisaAyam.toLocaleString('id-ID')} ekor.`,
+    });
+
+    // Otomatis sinkronisasi ke Google Sheets di background
+    fetch('/api/sheets/sync-populasi', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        row: {
+          tanggal: '2026-09-03',
+          branchId: selectedCage.branchId,
+          branchName: selectedCage.branchName,
+          cageId: selectedCage.id,
+          cageName: selectedCage.name,
+          tipe: 'KEMATIAN',
+          jumlah: mati,
+          populasiAkhir: sisaAyam,
+          catatan: `${penyebab} - ${catatan}`,
+          userName: user?.name || 'Pengawas Lapangan',
+        },
+      }),
+    }).catch((err) => console.warn('Background sync to Google Sheets skipped or failed:', err));
+
     setShowConfirmModal(false);
     setShowToast(true);
 

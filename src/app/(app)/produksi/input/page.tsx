@@ -123,6 +123,37 @@ export default function InputProduksiPage() {
       description: `Mencatat panen Pagi ${pagiIkat * 30} butir & Sore ${soreIkat * 30} butir. Total: ${totalProduksi.toLocaleString('id-ID')} butir (Hen-Day ACT: ${actPercent}%).`,
     });
 
+    // Otomatis sinkronisasi ke Google Sheets di background
+    fetch('/api/sheets/sync-produksi', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        row: {
+          tanggal: new Date().toISOString().split('T')[0],
+          branchId: selectedCage?.branchId || 'branch-1',
+          branchName: selectedCage?.branchName || 'Cabang',
+          cageId: selectedCage?.id || selectedCageId,
+          cageName: selectedCage?.name || 'Kandang',
+          pagiIkat,
+          pagiButir: pagiIkat * 30,
+          soreIkat,
+          soreButir: soreIkat * 30,
+          butir,
+          retak,
+          putih,
+          kotorPutih,
+          k,
+          r,
+          l,
+          totalProduksi,
+          populasiHidup: populasi,
+          actPercent,
+          standardPercent,
+          userName: user?.name || 'Pengawas Lapangan',
+        },
+      }),
+    }).catch((err) => console.warn('Background sync to Google Sheets skipped or failed:', err));
+
     setShowConfirmModal(false);
     setShowToast(true);
 

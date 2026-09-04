@@ -116,6 +116,28 @@ export default function InputPakanPage() {
       description: `Alokasi ${kirimSak} sak (${kirimKg} kg) pakan ${jenisPakan} untuk ${populasi.toLocaleString('id-ID')} ekor ayam.`,
     });
 
+    // Otomatis sinkronisasi ke Google Sheets di background
+    fetch('/api/sheets/sync-pakan', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        row: {
+          tanggal: '2026-09-03',
+          branchId: selectedCage.branchId,
+          branchName: selectedCage.branchName,
+          cageId: selectedCage.id,
+          cageName: selectedCage.name,
+          populasi,
+          jenisPakan,
+          jumlahPakanKg,
+          kirimKg,
+          kirimSak,
+          konsumsiGrPerEkor: konsumsiGr,
+          userName: user?.name || 'Pengawas Lapangan',
+        },
+      }),
+    }).catch((err) => console.warn('Background sync to Google Sheets skipped or failed:', err));
+
     setShowConfirmModal(false);
     setShowToast(true);
 
