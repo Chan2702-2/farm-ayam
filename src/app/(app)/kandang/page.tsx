@@ -50,8 +50,37 @@ export default function KandangPage() {
   const [newTipe, setNewTipe] = useState<'KAWAT' | 'KAYU'>('KAWAT');
   const [newOperator, setNewOperator] = useState('');
   const [newKapasitas, setNewKapasitas] = useState('4000');
-  const [newUmurMgg, setNewUmurMgg] = useState('30');
+  const [newTanggalMasuk, setNewTanggalMasuk] = useState(() => new Date().toISOString().split('T')[0]);
+  const [newUmurMasukMgg, setNewUmurMasukMgg] = useState('18');
+  const [newUmurMgg, setNewUmurMgg] = useState('18');
   const [newJenis, setNewJenis] = useState('LAYER LOHMANN');
+
+  const getElapsedWeeks = (dateStr: string) => {
+    if (!dateStr) return 0;
+    try {
+      const entry = new Date(dateStr + 'T00:00:00');
+      const now = new Date();
+      const diffTime = now.getTime() - entry.getTime();
+      if (diffTime <= 0) return 0;
+      return Math.floor(diffTime / (1000 * 60 * 60 * 24 * 7));
+    } catch {
+      return 0;
+    }
+  };
+
+  const handleTanggalMasukChange = (dateVal: string) => {
+    setNewTanggalMasuk(dateVal);
+    const elapsed = getElapsedWeeks(dateVal);
+    const baseAge = Number(newUmurMasukMgg) || 18;
+    setNewUmurMgg(String(baseAge + elapsed));
+  };
+
+  const handleUmurMasukChange = (val: string) => {
+    setNewUmurMasukMgg(val);
+    const elapsed = getElapsedWeeks(newTanggalMasuk);
+    const baseAge = Number(val) || 0;
+    setNewUmurMgg(String(baseAge + elapsed));
+  };
 
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
 
@@ -176,9 +205,9 @@ export default function KandangPage() {
       afkir: 0,
       mutasiKeluar: 0,
       mutasiMasuk: 0,
-      tanggalMasuk: new Date().toISOString().split('T')[0],
-      umurMgg: Number(newUmurMgg) || 30,
-      umurBln: Math.round((Number(newUmurMgg) || 30) / 4.3),
+      tanggalMasuk: newTanggalMasuk || new Date().toISOString().split('T')[0],
+      umurMgg: Number(newUmurMgg) || 18,
+      umurBln: Math.round((Number(newUmurMgg) || 18) / 4.3),
       jenis: newJenis,
       beratAktual: 0,
       beratStandard: 1858,
@@ -205,6 +234,9 @@ export default function KandangPage() {
     setShowAddModal(false);
     setNewNama('');
     setNewOperator('');
+    setNewTanggalMasuk(new Date().toISOString().split('T')[0]);
+    setNewUmurMasukMgg('18');
+    setNewUmurMgg('18');
     setToastMessage(`Kandang "${newCage.name}" berhasil ditambahkan & disinkronkan ke Spreadsheet!`);
     markDataDirty();
     performAutoSync();
@@ -621,7 +653,7 @@ export default function KandangPage() {
             <input
               type="text"
               required
-              placeholder="Contoh: YUDI PRAKOSO"
+              placeholder="Nama Petugas"
               value={newOperator}
               onChange={(e) => setNewOperator(e.target.value)}
               className="w-full h-11 px-3 rounded-xl border border-slate-200 bg-slate-50 text-sm font-semibold text-slate-800 outline-none focus:bg-white focus:border-[#0284c7]"
@@ -631,7 +663,7 @@ export default function KandangPage() {
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-semibold text-slate-600 mb-1">
-                Kapasitas (Ekor)
+                Kapasitas (Ekor) <span className="text-red-500">*</span>
               </label>
               <input
                 type="number"
@@ -645,7 +677,39 @@ export default function KandangPage() {
 
             <div>
               <label className="block text-xs font-semibold text-slate-600 mb-1">
-                Umur Ayam (Minggu)
+                Tanggal Masuk Ayam <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="date"
+                required
+                value={newTanggalMasuk}
+                onChange={(e) => handleTanggalMasukChange(e.target.value)}
+                className="w-full h-11 px-3 rounded-xl border border-slate-200 bg-slate-50 text-sm font-semibold text-slate-800 outline-none focus:bg-white focus:border-[#0284c7]"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-semibold text-slate-600 mb-1">
+                Umur Saat Masuk (Mgg)
+              </label>
+              <input
+                type="number"
+                min="0"
+                max="100"
+                value={newUmurMasukMgg}
+                onChange={(e) => handleUmurMasukChange(e.target.value)}
+                placeholder="18"
+                className="w-full h-11 px-3 rounded-xl border border-slate-200 bg-slate-50 text-sm font-semibold text-slate-800 outline-none focus:bg-white focus:border-[#0284c7]"
+              />
+              <span className="text-[10px] text-slate-400 mt-0.5 block">Standar pullet: 18 mgg</span>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-600 mb-1 flex items-center justify-between">
+                <span>Umur Saat Ini (Mgg)</span>
+                <span className="text-[10px] text-sky-600 font-bold bg-sky-50 px-1.5 py-0.2 rounded-md">Otomatis</span>
               </label>
               <input
                 type="number"
@@ -654,8 +718,13 @@ export default function KandangPage() {
                 max="150"
                 value={newUmurMgg}
                 onChange={(e) => setNewUmurMgg(e.target.value)}
-                className="w-full h-11 px-3 rounded-xl border border-slate-200 bg-slate-50 text-sm font-semibold text-slate-800 outline-none focus:bg-white focus:border-[#0284c7]"
+                className="w-full h-11 px-3 rounded-xl border border-sky-300 bg-sky-50/50 text-sm font-bold text-[#0369a1] outline-none focus:bg-white focus:border-[#0284c7]"
               />
+              <span className="text-[10px] text-sky-700 font-medium mt-0.5 block truncate">
+                {getElapsedWeeks(newTanggalMasuk) > 0
+                  ? `+${getElapsedWeeks(newTanggalMasuk)} mgg sejak masuk`
+                  : 'Sesuai tgl masuk'}
+              </span>
             </div>
           </div>
 
