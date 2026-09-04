@@ -140,32 +140,39 @@ export default function PakanOverviewPage() {
         </div>
       </div>
 
-      {/* Multi-Branch Filter Tabs */}
-      <div className="flex gap-1.5 overflow-x-auto no-scrollbar -mx-3.5 px-3.5 sm:mx-0 sm:px-0 pb-0.5">
-        <button
-          onClick={() => handleSelectBranch('all')}
-          className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all shrink-0 ${
-            activeBranch === 'all'
-              ? 'bg-amber-700 text-white shadow-xs'
-              : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
-          }`}
-        >
-          Semua Cabang (52 Kandang)
-        </button>
-        {branches.slice(0, 3).map((b) => (
+      {/* Multi-Branch Filter Tabs - ONLY FOR ADMIN */}
+      {currentUser && currentUser.role === 'PENGAWAS' ? (
+        <div className="p-2.5 bg-amber-50 border border-amber-200 rounded-xl flex items-center justify-between text-xs">
+          <span className="font-bold text-amber-900">📍 {currentUser.branchName}</span>
+          <span className="text-[11px] text-amber-700 font-semibold">{feedItems.length} Unit Alokasi</span>
+        </div>
+      ) : (
+        <div className="flex gap-1.5 overflow-x-auto no-scrollbar -mx-3.5 px-3.5 sm:mx-0 sm:px-0 pb-0.5">
           <button
-            key={b.id}
-            onClick={() => handleSelectBranch(b.id)}
+            onClick={() => handleSelectBranch('all')}
             className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all shrink-0 ${
-              activeBranch === b.id
-                ? 'bg-amber-600 text-white shadow-xs'
+              activeBranch === 'all'
+                ? 'bg-amber-700 text-white shadow-xs'
                 : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
             }`}
           >
-            {b.shortName} ({b.totalCages})
+            Semua Cabang (52 Kandang)
           </button>
-        ))}
-      </div>
+          {branches.slice(0, 3).map((b) => (
+            <button
+              key={b.id}
+              onClick={() => handleSelectBranch(b.id)}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all shrink-0 ${
+                activeBranch === b.id
+                  ? 'bg-amber-600 text-white shadow-xs'
+                  : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+              }`}
+            >
+              {b.shortName} ({b.totalCages})
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* KPI Feed Summary Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">

@@ -165,32 +165,39 @@ export default function KandangPage() {
         </button>
       </div>
 
-      {/* Multi-Branch Filter Tabs */}
-      <div className="flex gap-1.5 overflow-x-auto no-scrollbar pb-1">
-        <button
-          onClick={() => handleSelectBranch('all')}
-          className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all shrink-0 ${
-            activeBranch === 'all'
-              ? 'bg-[#0369a1] text-white shadow-xs'
-              : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
-          }`}
-        >
-          Semua Cabang (5)
-        </button>
-        {branches.map((b) => (
+      {/* Multi-Branch Filter Tabs - ONLY FOR ADMIN */}
+      {currentUser && currentUser.role === 'PENGAWAS' ? (
+        <div className="p-2.5 bg-amber-50 border border-amber-200 rounded-xl flex items-center justify-between text-xs">
+          <span className="font-bold text-amber-900">📍 {currentUser.branchName}</span>
+          <span className="text-[11px] text-amber-700 font-semibold">{cages.length} Unit Kandang</span>
+        </div>
+      ) : (
+        <div className="flex gap-1.5 overflow-x-auto no-scrollbar pb-1">
           <button
-            key={b.id}
-            onClick={() => handleSelectBranch(b.id)}
+            onClick={() => handleSelectBranch('all')}
             className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all shrink-0 ${
-              activeBranch === b.id
-                ? 'bg-[#0284c7] text-white shadow-xs'
+              activeBranch === 'all'
+                ? 'bg-[#0369a1] text-white shadow-xs'
                 : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
             }`}
           >
-            {b.shortName} ({b.totalCages})
+            Semua Cabang (5)
           </button>
-        ))}
-      </div>
+          {branches.map((b) => (
+            <button
+              key={b.id}
+              onClick={() => handleSelectBranch(b.id)}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all shrink-0 ${
+                activeBranch === b.id
+                  ? 'bg-[#0284c7] text-white shadow-xs'
+                  : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+              }`}
+            >
+              {b.shortName} ({b.totalCages})
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Search Bar */}
       <div className="relative flex items-center w-full">

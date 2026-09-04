@@ -148,24 +148,26 @@ export function AppHeader({
           </div>
 
           <div className="flex items-center gap-1.5 shrink-0">
-            {/* Multi-Branch Selector Button */}
-            <button
-              onClick={() => setShowBranchModal(true)}
-              className={`flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-bold border transition-all active:scale-95 ${
-                isPengawas
-                  ? 'bg-amber-50 text-amber-900 border-amber-200 hover:bg-amber-100'
-                  : 'bg-sky-50 text-[#0369a1] border-sky-200/80 hover:bg-sky-100'
-              }`}
-              title={isPengawas ? 'Unit Kandang Anda' : 'Pilih Cabang Peternakan'}
-            >
-              {isPengawas ? (
+            {/* Branch Badge / Selector */}
+            {isPengawas ? (
+              <div
+                className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-bold bg-amber-50 text-amber-900 border border-amber-200 shrink-0"
+                title={`Cabang Penugasan: ${currentUser?.branchName}`}
+              >
                 <Warehouse className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-              ) : (
+                <span className="max-w-[85px] sm:max-w-[140px] truncate">{branchLabel}</span>
+              </div>
+            ) : (
+              <button
+                onClick={() => setShowBranchModal(true)}
+                className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-bold bg-sky-50 text-[#0369a1] border border-sky-200/80 hover:bg-sky-100 active:scale-95 transition-all shrink-0"
+                title="Pilih Cabang Peternakan"
+              >
                 <Building2 className="w-3.5 h-3.5 text-[#0284c7] shrink-0" />
-              )}
-              <span className="max-w-[85px] sm:max-w-[140px] truncate">{branchLabel}</span>
-              <ChevronDown className="w-3 h-3 opacity-70 shrink-0" />
-            </button>
+                <span className="max-w-[85px] sm:max-w-[140px] truncate">{branchLabel}</span>
+                <ChevronDown className="w-3 h-3 opacity-70 shrink-0" />
+              </button>
+            )}
 
             {/* Log Aktivitas Button */}
             <Link

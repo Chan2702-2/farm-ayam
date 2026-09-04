@@ -220,7 +220,7 @@ export default function LaporanPage() {
 
       {/* Filter Bar (3 Authentic Branches: 3 Alur, Balai Rupih, Rosam) */}
       <LaporanFilterBar
-        branches={branches}
+        branches={currentUser?.role === 'PENGAWAS' ? [] : branches}
         activeBranch={activeBranch}
         onSelectBranch={handleSelectBranch}
         selectedDate={selectedDate}
@@ -228,7 +228,7 @@ export default function LaporanPage() {
           if (reportType === 'lph') setShowExportModal(true);
           else handleExportPakanDirect();
         }}
-        currentBranchName={currentBranchObj?.name}
+        currentBranchName={currentUser?.role === 'PENGAWAS' ? currentUser.branchName : currentBranchObj?.name}
       />
 
       {/* KPI Cards based on Selected Report Type */}

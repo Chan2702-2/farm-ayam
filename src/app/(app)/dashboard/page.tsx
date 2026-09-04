@@ -125,17 +125,24 @@ export default function DashboardPage() {
             <span className="truncate">Kamis, 3 September 2026</span>
           </div>
           <h1 className="font-jakarta font-extrabold text-lg sm:text-xl text-slate-900 tracking-tight leading-tight truncate mt-0.5">
-            {activeBranchId === 'all' ? 'Dashboard 5 Cabang' : currentBranch?.name}
+            {currentUser?.role === 'PENGAWAS' ? currentUser.branchName : (activeBranchId === 'all' ? 'Dashboard 5 Cabang' : currentBranch?.name)}
           </h1>
         </div>
 
-        <button
-          onClick={() => setShowBranchModal(true)}
-          className="flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-[#e0f2fe] text-[#0369a1] text-[11px] font-bold shadow-xs active:scale-95 transition-all shrink-0"
-        >
-          <Building2 className="w-3 h-3 text-[#0284c7]" />
-          <span>{activeBranchId === 'all' ? '5 Cabang' : currentBranch?.shortName}</span>
-        </button>
+        {currentUser?.role === 'PENGAWAS' ? (
+          <div className="flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-amber-50 text-amber-900 border border-amber-200 text-[11px] font-bold shrink-0">
+            <Building2 className="w-3 h-3 text-amber-600" />
+            <span>{currentUser.branchName}</span>
+          </div>
+        ) : (
+          <button
+            onClick={() => setShowBranchModal(true)}
+            className="flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-[#e0f2fe] text-[#0369a1] text-[11px] font-bold shadow-xs active:scale-95 transition-all shrink-0"
+          >
+            <Building2 className="w-3 h-3 text-[#0284c7]" />
+            <span>{activeBranchId === 'all' ? '5 Cabang' : currentBranch?.shortName}</span>
+          </button>
+        )}
       </div>
 
       {/* Pengawas Isolated Access Banner */}
@@ -160,32 +167,34 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* Multi-Branch Quick Horizontal Scroll Tabs */}
-      <div className="flex gap-1.5 overflow-x-auto no-scrollbar -mx-3.5 px-3.5 sm:mx-0 sm:px-0 py-0.5">
-        <button
-          onClick={() => handleSwitchBranch('all')}
-          className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all shrink-0 ${
-            activeBranchId === 'all'
-              ? 'bg-[#0369a1] text-white shadow-xs'
-              : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
-          }`}
-        >
-          Semua Cabang
-        </button>
-        {branches.map((b) => (
+      {/* Multi-Branch Quick Horizontal Scroll Tabs - ONLY FOR ADMIN */}
+      {(!currentUser || currentUser.role === 'ADMIN') && (
+        <div className="flex gap-1.5 overflow-x-auto no-scrollbar -mx-3.5 px-3.5 sm:mx-0 sm:px-0 py-0.5">
           <button
-            key={b.id}
-            onClick={() => handleSwitchBranch(b.id)}
+            onClick={() => handleSwitchBranch('all')}
             className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all shrink-0 ${
-              activeBranchId === b.id
-                ? 'bg-[#0284c7] text-white shadow-xs'
+              activeBranchId === 'all'
+                ? 'bg-[#0369a1] text-white shadow-xs'
                 : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
             }`}
           >
-            {b.shortName} ({b.totalCages})
+            Semua Cabang
           </button>
-        ))}
-      </div>
+          {branches.map((b) => (
+            <button
+              key={b.id}
+              onClick={() => handleSwitchBranch(b.id)}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all shrink-0 ${
+                activeBranchId === b.id
+                  ? 'bg-[#0284c7] text-white shadow-xs'
+                  : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+              }`}
+            >
+              {b.shortName} ({b.totalCages})
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Top 2x2 KPI Grid */}
       <div className="grid grid-cols-2 gap-2.5">
