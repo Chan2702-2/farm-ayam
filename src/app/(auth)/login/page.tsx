@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   ShieldCheck,
@@ -12,9 +12,10 @@ import {
   AlertCircle,
   Loader2,
   Building2,
-  Warehouse
+  Warehouse,
+  Clock
 } from 'lucide-react';
-import { initialUsers, setCurrentUser, AuthUser } from '@/lib/data/auth-users';
+import { initialUsers, setCurrentUser, getCurrentUser, AuthUser } from '@/lib/data/auth-users';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -23,6 +24,24 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [sessionExpiredNotice, setSessionExpiredNotice] = useState(false);
+
+  useEffect(() => {
+    // If user is already authenticated with active session, redirect to dashboard
+    const user = getCurrentUser();
+    if (user) {
+      router.replace('/dashboard');
+      return;
+    }
+
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const isExpired = params.get('expired') === '1' || sessionStorage.getItem('yuki_session_expired') === '1';
+      if (isExpired) {
+        setSessionExpiredNotice(true);
+      }
+    }
+  }, [router]);
 
   const performLogin = async (userParam?: AuthUser) => {
     setIsLoading(true);
@@ -77,6 +96,19 @@ export default function LoginPage() {
             Sistem ERP Peternakan Ayam Layer &bull; Akses Terbatas Pengawas Kandang
           </p>
         </div>
+
+        {/* Session Expired Notice */}
+        {sessionExpiredNotice && (
+          <div className="p-3.5 bg-amber-50 border border-amber-200 rounded-2xl flex items-start gap-2.5 text-xs text-amber-900 shadow-xs animate-in fade-in slide-in-from-top-2">
+            <Clock className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+            <div>
+              <strong className="block font-bold">Sesi Telah Berakhir Otomatis</strong>
+              <span className="leading-relaxed">
+                Anda telah keluar secara otomatis karena tidak ada aktivitas selama 1 jam. Silakan login kembali untuk melanjutkan pekerjaan lapangan.
+              </span>
+            </div>
+          </div>
+        )}
 
         {/* Login Box */}
         <div className="bg-white rounded-3xl p-5 sm:p-6 shadow-sm border border-slate-100 space-y-4">

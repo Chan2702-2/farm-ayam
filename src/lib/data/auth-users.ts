@@ -1,9 +1,5 @@
 // User Accounts & Branch-Level Access Control for Yuki Farm
-// Strict Isolation PER CABANG:
-// - Cabang 3 Alur -> Pengawas A
-// - Cabang Balai Rupih -> Pengawas B
-// - Cabang Rosam -> Pengawas C
-// - Super Admin -> Admin Pusat
+// Strict Isolation PER CABANG with 1-Hour Inactivity Auto-Logout
 
 import { FarmCageData, FeedDistributionItem } from './farm-data';
 
@@ -80,34 +76,84 @@ export const initialUsers: AuthUser[] = [
   },
 ];
 
+// Inactivity timeout: 1 Hour (60 minutes * 60 seconds * 1000 ms = 3,600,000 ms)
+export const INACTIVITY_TIMEOUT_MS = 60 * 60 * 1000;
+
+export function recordUserActivity(): void {
+  if (typeof window !== 'undefined') {
+    localStorage.setItem('yuki_last_activity', Date.now().toString());
+  }
+}
+
+export function checkSessionExpired(): boolean {
+  if (typeof window === 'undefined') return false;
+  const raw = localStorage.getItem('yuki_auth_user');
+  if (!raw) return true;
+
+  const lastActivity = localStorage.getItem('yuki_last_activity');
+  if (lastActivity) {
+    const elapsed = Date.now() - parseInt(lastActivity, 10);
+    if (elapsed > INACTIVITY_TIMEOUT_MS) {
+      return true;
+    }
+  }
+  return false;
+}
+
 export function getCurrentUser(): AuthUser | null {
   if (typeof window === 'undefined') return null;
+
   const raw = localStorage.getItem('yuki_auth_user');
   if (!raw) {
-    return initialUsers[0];
+    return null; // Must return null so unauthenticated visitors are forced to login!
   }
+
+  // Check if session has timed out due to 1 hour inactivity
+  const lastActivity = localStorage.getItem('yuki_last_activity');
+  if (lastActivity) {
+    const elapsed = Date.now() - parseInt(lastActivity, 10);
+    if (elapsed > INACTIVITY_TIMEOUT_MS) {
+      logoutUser(true);
+      return null;
+    }
+  }
+
   try {
     return JSON.parse(raw);
   } catch {
-    return initialUsers[0];
+    return null;
   }
 }
 
 export function setCurrentUser(user: AuthUser): void {
   if (typeof window !== 'undefined') {
     localStorage.setItem('yuki_auth_user', JSON.stringify(user));
+    localStorage.setItem('yuki_last_activity', Date.now().toString());
+    sessionStorage.removeItem('yuki_session_expired');
+
     if (user.branchId && user.branchId !== 'all') {
       localStorage.setItem('yuki_active_branch', user.branchId);
+    } else {
+      localStorage.setItem('yuki_active_branch', 'all');
     }
+
     window.dispatchEvent(new Event('authChange'));
     window.dispatchEvent(new Event('branchChange'));
   }
 }
 
-export function logoutUser(): void {
+export function logoutUser(isExpired: boolean = false): void {
   if (typeof window !== 'undefined') {
     localStorage.removeItem('yuki_auth_user');
+    localStorage.removeItem('yuki_last_activity');
     localStorage.setItem('yuki_active_branch', 'all');
+
+    if (isExpired) {
+      sessionStorage.setItem('yuki_session_expired', '1');
+    } else {
+      sessionStorage.removeItem('yuki_session_expired');
+    }
+
     window.dispatchEvent(new Event('authChange'));
     window.dispatchEvent(new Event('branchChange'));
   }
