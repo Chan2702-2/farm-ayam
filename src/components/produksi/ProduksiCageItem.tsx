@@ -45,15 +45,15 @@ export function ProduksiCageItem({ cage }: ProduksiCageItemProps) {
       {/* Production stats strip */}
       <div className="grid grid-cols-3 gap-2 p-2 bg-slate-50 rounded-xl text-xs">
         <div>
-          <span className="text-slate-400 block text-[9px] uppercase font-bold">Pagi (30)</span>
+          <span className="text-slate-400 block text-[9px] uppercase font-bold">Pagi</span>
           <strong className="text-slate-800 text-xs">
-            {cage.pagiIkat * 30} <span className="text-[10px] font-normal text-slate-500">btr</span>
+            {(cage.pagiIkat * 30) + (cage.pagiButir || 0)} <span className="text-[10px] font-normal text-slate-500">btr</span>
           </strong>
         </div>
         <div>
-          <span className="text-slate-400 block text-[9px] uppercase font-bold">Sore (30)</span>
+          <span className="text-slate-400 block text-[9px] uppercase font-bold">Sore</span>
           <strong className="text-slate-800 text-xs">
-            {cage.soreIkat * 30} <span className="text-[10px] font-normal text-slate-500">btr</span>
+            {(cage.soreIkat * 30) + (cage.soreButir || 0)} <span className="text-[10px] font-normal text-slate-500">btr</span>
           </strong>
         </div>
         <div>

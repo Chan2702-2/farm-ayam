@@ -38,7 +38,9 @@ export interface FarmCageData {
   beratAktual: number;
   beratStandard: number;
   pagiIkat: number;
+  pagiButir?: number;
   soreIkat: number;
+  soreButir?: number;
   butir: number;
   retak: number;
   putih: number;
@@ -51,6 +53,7 @@ export interface FarmCageData {
   standardPercent: number;
   tipe?: 'KAWAT' | 'KAYU' | string;
   obat?: string | null;
+  tanggalProduksi?: string;
 }
 
 export interface FeedDistributionItem {
@@ -332,8 +335,8 @@ export function calculateCageSummary(cages: FarmCageData[]) {
   const totalProduksi = cages.reduce((acc, c) => acc + (c.totalProduksi || 0), 0);
   const totalMati = cages.reduce((acc, c) => acc + (c.mati || 0), 0);
   const totalAfkir = cages.reduce((acc, c) => acc + (c.afkir || 0), 0);
-  const totalPagiButir = cages.reduce((acc, c) => acc + ((c.pagiIkat || 0) * 30), 0);
-  const totalSoreButir = cages.reduce((acc, c) => acc + ((c.soreIkat || 0) * 30), 0);
+  const totalPagiButir = cages.reduce((acc, c) => acc + ((c.pagiIkat || 0) * 30 + (c.pagiButir || 0)), 0);
+  const totalSoreButir = cages.reduce((acc, c) => acc + ((c.soreIkat || 0) * 30 + (c.soreButir || 0)), 0);
   const totalRetak = cages.reduce((acc, c) => acc + (c.retak || 0), 0);
   const totalKotor = cages.reduce((acc, c) => acc + (c.kotorPutih || 0), 0);
   const totalKRL = cages.reduce((acc, c) => acc + ((c.k || 0) + (c.r || 0) + (c.l || 0)), 0);

@@ -7,7 +7,8 @@ import {
   ChevronDown,
   CheckCircle2,
   Save,
-  AlertCircle
+  AlertCircle,
+  Calendar
 } from 'lucide-react';
 import {
   getFarmCages,
@@ -28,9 +29,14 @@ export default function InputProduksiPage() {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showToast, setShowToast] = useState(false);
 
+  // Date State (default to today: YYYY-MM-DD)
+  const [tanggal, setTanggal] = useState(() => new Date().toISOString().split('T')[0]);
+
   // Form State
   const [pagiIkat, setPagiIkat] = useState<number>(0);
+  const [pagiButir, setPagiButir] = useState<number>(0);
   const [soreIkat, setSoreIkat] = useState<number>(0);
+  const [soreButir, setSoreButir] = useState<number>(0);
   const [butir, setButir] = useState<number>(0);
   const [retak, setRetak] = useState<number>(0);
   const [putih, setPutih] = useState<number>(0);
@@ -68,7 +74,9 @@ export default function InputProduksiPage() {
   useEffect(() => {
     if (selectedCage) {
       setPagiIkat(selectedCage.pagiIkat || 0);
+      setPagiButir(selectedCage.pagiButir || 0);
       setSoreIkat(selectedCage.soreIkat || 0);
+      setSoreButir(selectedCage.soreButir || 0);
       setButir(selectedCage.butir || 0);
       setRetak(selectedCage.retak || 0);
       setPutih(selectedCage.putih || 0);
@@ -79,10 +87,11 @@ export default function InputProduksiPage() {
     }
   }, [selectedCageId]);
 
-  // Calculations
-  const totalPagi = pagiIkat * 30;
-  const totalSore = soreIkat * 30;
-  const totalProduksi = totalPagi + totalSore + butir + retak + putih + kotorPutih + k + r + l;
+  // Calculations: 1 Ikat = 30 butir + Butir lepas/eceran
+  const totalPagi = (pagiIkat * 30) + pagiButir;
+  const totalSore = (soreIkat * 30) + soreButir;
+  const totalButirEcer = pagiButir + soreButir;
+  const totalProduksi = totalPagi + totalSore + retak + putih + kotorPutih + k + r + l;
   const populasi = selectedCage?.populasiHidup || 4000;
   const actPercent = populasi > 0 ? Number(((totalProduksi / populasi) * 100).toFixed(2)) : 0;
   const standardPercent = selectedCage?.standardPercent || 95.5;
@@ -102,8 +111,10 @@ export default function InputProduksiPage() {
         return {
           ...c,
           pagiIkat,
+          pagiButir,
           soreIkat,
-          butir,
+          soreButir,
+          butir: totalButirEcer,
           retak,
           putih,
           kotorPutih,
@@ -112,6 +123,7 @@ export default function InputProduksiPage() {
           l,
           totalProduksi,
           actPercent,
+          tanggalProduksi: tanggal,
         };
       }
       return c;
@@ -127,21 +139,21 @@ export default function InputProduksiPage() {
       branchId: selectedCage?.branchId || 'branch-1',
       branchName: selectedCage?.branchName || 'Cabang',
       actionType: 'PRODUKSI',
-      title: `Input Panen ${selectedCage?.name || 'Kandang'}`,
-      description: `Mencatat panen Pagi ${pagiIkat * 30} butir & Sore ${soreIkat * 30} butir. Total: ${totalProduksi.toLocaleString('id-ID')} butir (Hen-Day ACT: ${actPercent}%).`,
+      title: `Input Panen ${selectedCage?.name || 'Kandang'} (${tanggal})`,
+      description: `Mencatat panen Pagi ${totalPagi} butir (${pagiIkat} ikat + ${pagiButir} btr) & Sore ${totalSore} butir (${soreIkat} ikat + ${soreButir} btr). Total: ${totalProduksi.toLocaleString('id-ID')} butir (Hen-Day ACT: ${actPercent}%).`,
     });
 
     const prodRow = {
-      tanggal: new Date().toISOString().split('T')[0],
+      tanggal: tanggal || new Date().toISOString().split('T')[0],
       branchId: selectedCage?.branchId || 'branch-1',
       branchName: selectedCage?.branchName || 'Cabang',
       cageId: selectedCage?.id || selectedCageId,
       cageName: selectedCage?.name || 'Kandang',
       pagiIkat,
-      pagiButir: pagiIkat * 30,
+      pagiButir: totalPagi,
       soreIkat,
-      soreButir: soreIkat * 30,
-      butir,
+      soreButir: totalSore,
+      butir: totalButirEcer,
       retak,
       putih,
       kotorPutih,
@@ -198,17 +210,25 @@ export default function InputProduksiPage() {
   return (
     <div className="pt-16 sm:pt-20 pb-28 px-3.5 sm:px-4 space-y-3.5 sm:space-y-4">
       {/* Top Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-2">
         <div>
           <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
             Pencatatan Lapangan
           </span>
-          <h1 className="font-jakarta font-bold text-xl text-slate-900">
+          <h1 className="font-jakarta font-bold text-lg sm:text-xl text-slate-900">
             Input Produksi Harian
           </h1>
         </div>
-        <div className="px-2.5 py-1 rounded-full bg-[#e0f2fe] text-[#0369a1] text-xs font-semibold">
-          3 Sep 2026
+
+        {/* Dynamic Date Picker Pill */}
+        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-sky-50 text-[#0369a1] text-xs font-semibold border border-sky-200 shadow-2xs">
+          <Calendar className="w-3.5 h-3.5 text-[#0284c7] shrink-0" />
+          <input
+            type="date"
+            value={tanggal}
+            onChange={(e) => setTanggal(e.target.value)}
+            className="bg-transparent text-xs font-bold text-[#0369a1] focus:outline-none cursor-pointer"
+          />
         </div>
       </div>
 
@@ -246,17 +266,21 @@ export default function InputProduksiPage() {
         </div>
       </div>
 
-      {/* Modular Stepper Pagi & Sore */}
+      {/* Modular Stepper Pagi & Sore with Butir Eceran */}
       <EggStepper
         session="pagi"
         valueIkat={pagiIkat}
         onChange={setPagiIkat}
+        valueButir={pagiButir}
+        onChangeButir={setPagiButir}
       />
 
       <EggStepper
         session="sore"
         valueIkat={soreIkat}
         onChange={setSoreIkat}
+        valueButir={soreButir}
+        onChangeButir={setSoreButir}
       />
 
       {/* Subtotal Produksi Ribbon */}
@@ -268,10 +292,13 @@ export default function InputProduksiPage() {
           <strong className="font-jakarta font-extrabold text-2xl">
             {(totalPagi + totalSore).toLocaleString('id-ID')} Butir
           </strong>
+          <span className="text-[11px] text-sky-100 block mt-0.5">
+            {pagiIkat + soreIkat} Ikat {totalButirEcer > 0 ? `+ ${totalButirEcer} Butir Ecer` : ''}
+          </span>
         </div>
-        <div className="text-right text-xs text-sky-100">
-          <span>{pagiIkat + soreIkat} Ikat</span>
-          <span className="block text-[10px] text-sky-200">Pagi {pagiIkat} &bull; Sore {soreIkat}</span>
+        <div className="text-right text-xs text-sky-100 space-y-0.5">
+          <div>Pagi: <strong className="text-white">{totalPagi.toLocaleString('id-ID')}</strong> ({pagiIkat} ikt{pagiButir > 0 ? ` + ${pagiButir}` : ''})</div>
+          <div>Sore: <strong className="text-white">{totalSore.toLocaleString('id-ID')}</strong> ({soreIkat} ikt{soreButir > 0 ? ` + ${soreButir}` : ''})</div>
         </div>
       </div>
 
@@ -349,6 +376,10 @@ export default function InputProduksiPage() {
         <div className="space-y-3.5">
           <div className="p-3 bg-slate-50 rounded-xl space-y-1.5 text-xs text-slate-600">
             <div className="flex justify-between">
+              <span>Tanggal Panen:</span>
+              <strong className="text-slate-800">{tanggal}</strong>
+            </div>
+            <div className="flex justify-between">
               <span>Unit Kandang:</span>
               <strong className="text-slate-800">{selectedCage?.name}</strong>
             </div>
@@ -358,12 +389,22 @@ export default function InputProduksiPage() {
             </div>
             <div className="flex justify-between">
               <span>Panen Pagi:</span>
-              <strong className="text-slate-800">{totalPagi.toLocaleString('id-ID')} Butir ({pagiIkat} Ikat)</strong>
+              <strong className="text-slate-800">
+                {totalPagi.toLocaleString('id-ID')} Butir ({pagiIkat} Ikat{pagiButir > 0 ? ` + ${pagiButir} btr` : ''})
+              </strong>
             </div>
             <div className="flex justify-between">
               <span>Panen Sore:</span>
-              <strong className="text-slate-800">{totalSore.toLocaleString('id-ID')} Butir ({soreIkat} Ikat)</strong>
+              <strong className="text-slate-800">
+                {totalSore.toLocaleString('id-ID')} Butir ({soreIkat} Ikat{soreButir > 0 ? ` + ${soreButir} btr` : ''})
+              </strong>
             </div>
+            {totalButirEcer > 0 && (
+              <div className="flex justify-between text-amber-800 font-medium">
+                <span>Total Butir Ecer:</span>
+                <strong>+{totalButirEcer} Butir</strong>
+              </div>
+            )}
             <div className="flex justify-between border-t border-slate-200 pt-1.5">
               <span>Total Produksi:</span>
               <strong className="text-[#0369a1] text-sm">{totalProduksi.toLocaleString('id-ID')} Butir</strong>

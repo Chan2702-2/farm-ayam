@@ -110,8 +110,8 @@ export default function KandangDetailPage() {
 
   const occupancy = cage.kapasitas > 0 ? ((cage.populasiHidup / cage.kapasitas) * 100).toFixed(1) : '0';
   const isBelow = cage.actPercent < cage.standardPercent && cage.totalProduksi > 0;
-  const pagiButir = (cage.pagiIkat || 0) * 30;
-  const soreButir = (cage.soreIkat || 0) * 30;
+  const pagiButir = ((cage.pagiIkat || 0) * 30) + (cage.pagiButir || 0);
+  const soreButir = ((cage.soreIkat || 0) * 30) + (cage.soreButir || 0);
   const totalTelur = cage.totalProduksi || (pagiButir + soreButir);
   const pagiRatio = totalTelur > 0 ? Math.round((pagiButir / totalTelur) * 100) : 95;
   const soreRatio = 100 - pagiRatio;

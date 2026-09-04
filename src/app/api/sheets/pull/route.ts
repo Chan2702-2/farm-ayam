@@ -160,8 +160,13 @@ export async function GET(req: NextRequest) {
 
           if (matchCage && !seenCages.has(matchCage.id)) {
             seenCages.add(matchCage.id);
+            matchCage.tanggalProduksi = r[1] || '';
             matchCage.pagiIkat = Number(r[6]) || 0;
+            const sheetPagiButir = Number(r[7]) || 0;
+            matchCage.pagiButir = Math.max(0, sheetPagiButir - (matchCage.pagiIkat * 30));
             matchCage.soreIkat = Number(r[8]) || 0;
+            const sheetSoreButir = Number(r[9]) || 0;
+            matchCage.soreButir = Math.max(0, sheetSoreButir - (matchCage.soreIkat * 30));
             matchCage.butir = Number(r[10]) || 0;
             matchCage.retak = Number(r[11]) || 0;
             matchCage.putih = Number(r[12]) || 0;
