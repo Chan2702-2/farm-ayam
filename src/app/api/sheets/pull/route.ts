@@ -149,11 +149,70 @@ export async function GET(req: NextRequest) {
         };
       });
 
-    // 3. Ambil data Produksi Telur terbaru untuk memperbarui angka panen kandang
+    // 3. Ambil data Produksi Telur terbaru untuk memperbarui angka panen kandang & histori harian
+    const dailyEggProductions: any[] = [];
     try {
-      const prodRaw = await readSheetValues('Produksi Telur', 'A2:V5000');
+      const prodRaw = await readSheetValues('Produksi Telur', 'A2:X5000');
       if (Array.isArray(prodRaw) && prodRaw.length > 0) {
-        // Balik urutan agar baris terbaru diproses lebih dulu
+        for (const r of prodRaw) {
+          const tanggal = (r[1] || '').trim();
+          const cageId = (r[4] || '').trim();
+          if (!tanggal || !cageId) continue;
+
+          const pagiIkat = Number(r[6]) || 0;
+          const sheetPagiButir = Number(r[7]) || 0;
+          const pagiButir = Math.max(0, sheetPagiButir - (pagiIkat * 30));
+
+          const soreIkat = Number(r[8]) || 0;
+          const sheetSoreButir = Number(r[9]) || 0;
+          const soreButir = Math.max(0, sheetSoreButir - (soreIkat * 30));
+
+          const butir = Number(r[10]) || (pagiButir + soreButir);
+          const retak = Number(r[11]) || 0;
+          const putih = Number(r[12]) || 0;
+          const kotorPutih = Number(r[13]) || 0;
+          const k = Number(r[14]) || 0;
+          const r_defect = Number(r[15]) || 0;
+          const l = Number(r[16]) || 0;
+          const totalProduksi = Number(r[17]) || 0;
+          const populasiHidup = Number(r[18]) || 4000;
+          const actPercent = Number(r[19]) || 0;
+          const standardPercent = Number(r[20]) || 95.5;
+          const petugas = (r[21] || '').trim() || 'Petugas';
+          const rawStatus = (r[22] || '').trim().toUpperCase();
+          const approvalStatus = rawStatus === 'APPROVED' ? 'APPROVED' : 'PENDING';
+          const approvedBy = (r[23] || '').trim() || undefined;
+
+          dailyEggProductions.push({
+            id: `prod-${cageId}-${tanggal}`,
+            tanggal,
+            cageId,
+            cageName: (r[5] || '').trim() || 'Kandang',
+            branchId: (r[2] || '').trim() || 'branch-1',
+            branchName: (r[3] || '').trim() || 'Cabang',
+            pagiIkat,
+            pagiButir,
+            soreIkat,
+            soreButir,
+            butir,
+            retak,
+            putih,
+            kotorPutih,
+            k,
+            r: r_defect,
+            l,
+            totalProduksi,
+            populasiHidup,
+            actPercent,
+            standardPercent,
+            approvalStatus,
+            approvedBy,
+            petugas,
+            updatedAt: r[0] || new Date().toISOString(),
+          });
+        }
+
+        // Balik urutan agar baris terbaru diproses lebih dulu untuk status aktif cage
         const reversed = [...prodRaw].reverse();
         const seenCages = new Set<string>();
 
@@ -339,11 +398,13 @@ export async function GET(req: NextRequest) {
       cages,
       feedItems,
       users,
+      dailyEggProductions,
       counts: {
         branches: branches.length,
         cages: cages.length,
         feedItems: feedItems.length,
         users: users.length,
+        dailyEggProductions: dailyEggProductions.length,
       },
     });
   } catch (error: unknown) {

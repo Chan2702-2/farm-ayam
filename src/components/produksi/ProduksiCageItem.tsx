@@ -13,23 +13,25 @@ interface ProduksiCageItemProps {
 
 export function ProduksiCageItem({ cage, date, productionRecord }: ProduksiCageItemProps) {
   const targetDate = date || new Date().toISOString().split('T')[0];
+  const todayStr = new Date().toISOString().split('T')[0];
+  const isToday = targetDate === todayStr;
 
-  // If productionRecord is provided, use it; otherwise fallback to cage current fields
+  // If productionRecord is provided, use it; otherwise fallback to cage current fields ONLY if today
   const hasRecord = !!productionRecord;
   const isApproved = productionRecord?.approvalStatus === 'APPROVED';
-  const hasData = hasRecord ? productionRecord.totalProduksi > 0 : cage.totalProduksi > 0;
 
   const pagiTotal = hasRecord
     ? (productionRecord.pagiIkat * 30) + (productionRecord.pagiButir || 0)
-    : (cage.pagiIkat * 30) + (cage.pagiButir || 0);
+    : (isToday ? (cage.pagiIkat * 30) + (cage.pagiButir || 0) : 0);
 
   const soreTotal = hasRecord
     ? (productionRecord.soreIkat * 30) + (productionRecord.soreButir || 0)
-    : (cage.soreIkat * 30) + (cage.soreButir || 0);
+    : (isToday ? (cage.soreIkat * 30) + (cage.soreButir || 0) : 0);
 
-  const totalProduksi = hasRecord ? productionRecord.totalProduksi : cage.totalProduksi;
-  const actPercent = hasRecord ? productionRecord.actPercent : cage.actPercent;
+  const totalProduksi = hasRecord ? productionRecord.totalProduksi : (isToday ? cage.totalProduksi : 0);
+  const actPercent = hasRecord ? productionRecord.actPercent : (isToday ? cage.actPercent : 0);
   const standardPercent = hasRecord ? productionRecord.standardPercent : cage.standardPercent;
+  const hasData = totalProduksi > 0;
   const isBelow = actPercent < standardPercent && hasData;
 
   return (
@@ -48,12 +50,12 @@ export function ProduksiCageItem({ cage, date, productionRecord }: ProduksiCageI
             {isApproved ? (
               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-[10px] font-bold">
                 <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-                Close (Approved)
+                Close
               </span>
             ) : hasData ? (
               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-50 border border-amber-200 text-amber-700 text-[10px] font-bold">
                 <Clock className="w-3 h-3 text-amber-600" />
-                Pending (Belum Approve)
+                Pending
               </span>
             ) : (
               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-slate-100 border border-slate-200 text-slate-500 text-[10px] font-medium">

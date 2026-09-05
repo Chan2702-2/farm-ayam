@@ -42,6 +42,7 @@ export default function ProduksiOverviewPage() {
   // Date Filter State (default: today)
   const todayStr = useMemo(() => new Date().toISOString().split('T')[0], []);
   const [selectedDate, setSelectedDate] = useState<string>(() => new Date().toISOString().split('T')[0]);
+  const [inputDate, setInputDate] = useState<string>(() => new Date().toISOString().split('T')[0]);
 
   // Approval Status Filter: 'all' | 'pending' | 'close'
   const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'close'>('all');
@@ -95,10 +96,24 @@ export default function ProduksiOverviewPage() {
     setTimeout(() => setToastMessage(null), 3500);
   };
 
+  const handleApplyDate = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (inputDate) {
+      setSelectedDate(inputDate);
+    }
+  };
+
   const handleShiftDate = (deltaDays: number) => {
     const d = new Date(selectedDate);
     d.setDate(d.getDate() + deltaDays);
-    setSelectedDate(d.toISOString().split('T')[0]);
+    const nextDate = d.toISOString().split('T')[0];
+    setInputDate(nextDate);
+    setSelectedDate(nextDate);
+  };
+
+  const handleSetToday = () => {
+    setInputDate(todayStr);
+    setSelectedDate(todayStr);
   };
 
   const currentBranchObj = branches.find((b) => b.id === activeBranch);
@@ -108,21 +123,34 @@ export default function ProduksiOverviewPage() {
     return cages.map((cage) => {
       const record = getDailyEggProduction(cage.id, selectedDate);
       const isApproved = record?.approvalStatus === 'APPROVED';
-      const hasData = (record && record.totalProduksi > 0) || false;
+      const isToday = selectedDate === todayStr;
+
+      const hasData = record ? record.totalProduksi > 0 : (isToday ? cage.totalProduksi > 0 : false);
       const status: 'PENDING' | 'APPROVED' = isApproved ? 'APPROVED' : 'PENDING';
+
+      const pagiTotal = record
+        ? (record.pagiIkat * 30 + (record.pagiButir || 0))
+        : (isToday ? (cage.pagiIkat * 30 + (cage.pagiButir || 0)) : 0);
+
+      const soreTotal = record
+        ? (record.soreIkat * 30 + (record.soreButir || 0))
+        : (isToday ? (cage.soreIkat * 30 + (cage.soreButir || 0)) : 0);
+
+      const totalProduksi = record ? record.totalProduksi : (isToday ? cage.totalProduksi : 0);
+      const actPercent = record ? record.actPercent : (isToday ? cage.actPercent : 0);
 
       return {
         cage,
         record,
         hasData,
         status,
-        pagiTotal: record ? (record.pagiIkat * 30 + (record.pagiButir || 0)) : (cage.pagiIkat * 30 + (cage.pagiButir || 0)),
-        soreTotal: record ? (record.soreIkat * 30 + (record.soreButir || 0)) : (cage.soreIkat * 30 + (cage.soreButir || 0)),
-        totalProduksi: record ? record.totalProduksi : cage.totalProduksi,
-        actPercent: record ? record.actPercent : cage.actPercent,
+        pagiTotal,
+        soreTotal,
+        totalProduksi,
+        actPercent,
       };
     });
-  }, [cages, selectedDate, prodVersion]);
+  }, [cages, selectedDate, prodVersion, todayStr]);
 
   // Calculate summary metrics on selectedDate
   const dateSummary = useMemo(() => {
@@ -196,8 +224,8 @@ export default function ProduksiOverviewPage() {
           </p>
         </div>
 
-        {/* Date Selector Navigation */}
-        <div className="flex items-center gap-1.5 self-start sm:self-auto flex-wrap">
+        {/* Date Selector Navigation & Search Form */}
+        <form onSubmit={handleApplyDate} className="flex items-center gap-1.5 self-start sm:self-auto flex-wrap">
           <button
             type="button"
             onClick={() => handleShiftDate(-1)}
@@ -207,15 +235,35 @@ export default function ProduksiOverviewPage() {
             <ChevronLeft className="w-4 h-4" />
           </button>
 
-          <div className="flex items-center bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl px-2.5 py-1.5 transition-colors">
+          <div className="flex items-center bg-slate-50 hover:bg-slate-100 border border-slate-200 focus-within:border-[#0284c7] focus-within:bg-white rounded-xl px-2.5 py-1.5 transition-colors">
             <Calendar className="w-3.5 h-3.5 text-sky-600 mr-2 shrink-0 pointer-events-none" />
             <input
               type="date"
-              value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
+              value={inputDate}
+              onChange={(e) => {
+                const val = e.target.value;
+                setInputDate(val);
+                if (val) {
+                  setSelectedDate(val);
+                }
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  handleApplyDate();
+                }
+              }}
               className="text-xs sm:text-sm font-bold text-slate-800 bg-transparent outline-none cursor-pointer"
             />
           </div>
+
+          <button
+            type="submit"
+            className="h-8 px-3 rounded-xl bg-[#0284c7] hover:bg-[#0369a1] text-white text-xs font-bold active:scale-95 transition-all shadow-xs flex items-center gap-1 shrink-0"
+            title="Terapkan Filter Tanggal"
+          >
+            <Search className="w-3.5 h-3.5" />
+            <span>Cari</span>
+          </button>
 
           <button
             type="button"
@@ -229,13 +277,13 @@ export default function ProduksiOverviewPage() {
           {selectedDate !== todayStr && (
             <button
               type="button"
-              onClick={() => setSelectedDate(todayStr)}
+              onClick={handleSetToday}
               className="px-2.5 py-1.5 rounded-xl bg-sky-50 hover:bg-sky-100 text-[#0284c7] text-xs font-bold transition-all shrink-0"
             >
               Hari Ini
             </button>
           )}
-        </div>
+        </form>
       </div>
 
       {/* Multi-Branch Tabs - ONLY FOR ADMIN */}
@@ -281,12 +329,12 @@ export default function ProduksiOverviewPage() {
         targetAct={dateSummary.avgStd}
       />
 
-      {/* Approval Status Filter Tabs (Pending: Belom di approve | Close: Sudah di approve) */}
+      {/* Approval Status Filter Tabs (Pending | Close) */}
       <div className="p-1 bg-slate-100/90 rounded-2xl border border-slate-200/70 flex items-center gap-1 overflow-x-auto no-scrollbar">
         <button
           type="button"
           onClick={() => setStatusFilter('all')}
-          className={`flex-1 min-w-[90px] py-2 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
+          className={`flex-1 min-w-[80px] py-2 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
             statusFilter === 'all'
               ? 'bg-white text-slate-900 shadow-xs'
               : 'text-slate-600 hover:text-slate-900'
@@ -303,14 +351,14 @@ export default function ProduksiOverviewPage() {
         <button
           type="button"
           onClick={() => setStatusFilter('pending')}
-          className={`flex-1 min-w-[130px] py-2 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
+          className={`flex-1 min-w-[100px] py-2 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
             statusFilter === 'pending'
               ? 'bg-amber-500 text-white shadow-xs shadow-amber-500/25'
               : 'text-amber-800 hover:bg-amber-50/60'
           }`}
         >
           <Clock className="w-3.5 h-3.5" />
-          <span>Pending (Belum Approve)</span>
+          <span>Pending</span>
           <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-extrabold ${
             statusFilter === 'pending' ? 'bg-white/25 text-white' : 'bg-amber-100 text-amber-900'
           }`}>
@@ -321,14 +369,14 @@ export default function ProduksiOverviewPage() {
         <button
           type="button"
           onClick={() => setStatusFilter('close')}
-          className={`flex-1 min-w-[130px] py-2 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
+          className={`flex-1 min-w-[100px] py-2 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
             statusFilter === 'close'
               ? 'bg-emerald-600 text-white shadow-xs shadow-emerald-600/25'
               : 'text-emerald-800 hover:bg-emerald-50/60'
           }`}
         >
           <CheckCircle2 className="w-3.5 h-3.5" />
-          <span>Close (Sudah Approve)</span>
+          <span>Close</span>
           <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-extrabold ${
             statusFilter === 'close' ? 'bg-white/25 text-white' : 'bg-emerald-100 text-emerald-900'
           }`}>
@@ -376,7 +424,7 @@ export default function ProduksiOverviewPage() {
             <p className="text-sm font-semibold text-slate-700">Tidak ada kandang ditemukan</p>
             <p className="text-xs text-slate-400 mt-1">
               {statusFilter !== 'all'
-                ? `Tidak ada kandang dengan status "${statusFilter === 'close' ? 'Close (Sudah Approve)' : 'Pending (Belum Approve)'}" pada tanggal ini.`
+                ? `Tidak ada kandang dengan status "${statusFilter === 'close' ? 'Close' : 'Pending'}" pada tanggal ini.`
                 : 'Coba ganti cabang atau kata kunci pencarian.'}
             </p>
           </div>

@@ -140,7 +140,7 @@ export async function pullDataFromSheets(force: boolean = false): Promise<{
       throw new Error(data.message || 'Gagal mengambil data dari Google Sheets');
     }
 
-    const { branches = [], cages = [], feedItems = [] } = data;
+    const { branches = [], cages = [], feedItems = [], dailyEggProductions = [] } = data;
     let updated = false;
 
     // 1. Simpan Cabang dari Google Sheets (jika di spreadsheet kosong/dihapus, lokal juga dikosongkan/disinkronkan)
@@ -179,6 +179,34 @@ export async function pullDataFromSheets(force: boolean = false): Promise<{
         saveFeedDistribution(validFeed);
       }
       updated = true;
+    }
+
+    // 4. Simpan Histori Produksi Telur Harian dari Google Sheets
+    if (Array.isArray(dailyEggProductions) && dailyEggProductions.length > 0) {
+      const existingStr = localStorage.getItem('yuki_daily_egg_productions');
+      let existingList: any[] = [];
+      if (existingStr) {
+        try {
+          const parsed = JSON.parse(existingStr);
+          if (Array.isArray(parsed)) existingList = parsed;
+        } catch (e) {}
+      }
+
+      const map = new Map<string, any>();
+      existingList.forEach((item) => {
+        if (item && item.cageId && item.tanggal) {
+          map.set(`${item.cageId}_${item.tanggal}`, item);
+        }
+      });
+
+      dailyEggProductions.forEach((item: any) => {
+        if (item && item.cageId && item.tanggal) {
+          map.set(`${item.cageId}_${item.tanggal}`, item);
+        }
+      });
+
+      localStorage.setItem('yuki_daily_egg_productions', JSON.stringify(Array.from(map.values())));
+      window.dispatchEvent(new CustomEvent('eggProductionChange'));
     }
 
     localStorage.setItem(LAST_SYNC_KEY, Date.now().toString());
