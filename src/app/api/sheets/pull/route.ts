@@ -21,12 +21,16 @@ export async function GET(req: NextRequest) {
     // 1. Ambil data Master Cabang
     const cabangRaw = await readSheetValues('Master Cabang', 'A2:I1000');
     const branches: FarmBranch[] = (cabangRaw || [])
-      .filter((r) => r[1] && r[3]) // Memiliki ID dan Nama Cabang
+      .filter((r) => {
+        const name = (r[3] || r[2] || r[1] || '').trim();
+        const status = (r[7] || '').toUpperCase().trim();
+        return name.length > 0 && status !== 'DIHAPUS';
+      })
       .map((r, i) => {
-        const id = r[1];
-        const code = r[2] || `${i + 1}`;
-        const name = r[3];
-        const location = r[4] || 'Lokasi Peternakan';
+        const name = (r[3] || r[2] || r[1] || `Cabang ${i + 1}`).trim();
+        const id = (r[1] || '').trim() || `branch-${i + 1}`;
+        const code = (r[2] || `${i + 1}`).trim();
+        const location = (r[4] || 'Lokasi Peternakan').trim();
         const totalCages = Number(r[5]) || 0;
         const populasi = Number(r[6]) || 0;
         const status = (r[7] as any) || 'OPTIMAL';

@@ -106,9 +106,10 @@ export function AppHeader({
     setIsSyncingData(true);
     try {
       await performAutoSync(true);
-      const pullRes = await pullDataFromSheets();
+      const pullRes = await pullDataFromSheets(true);
+      setBranches(getFarmBranches());
       if (pullRes.success) {
-        alert(`Sinkronisasi Berhasil!\nData terbaru berhasil dimuat dari Google Spreadsheet (${pullRes.branchesCount || 0} cabang, ${pullRes.cagesCount || 0} kandang).`);
+        alert(`Sinkronisasi Berhasil!\nData terbaru berhasil disinkronkan dengan Google Spreadsheet (${pullRes.branchesCount ?? 0} cabang, ${pullRes.cagesCount ?? 0} kandang).`);
       } else {
         alert('Sinkronisasi selesai.');
       }

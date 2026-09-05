@@ -143,26 +143,41 @@ export async function pullDataFromSheets(force: boolean = false): Promise<{
     const { branches = [], cages = [], feedItems = [] } = data;
     let updated = false;
 
-    // 1. Simpan Cabang dari Google Sheets jika ada
-    if (Array.isArray(branches) && branches.length > 0) {
+    // 1. Simpan Cabang dari Google Sheets (jika di spreadsheet kosong/dihapus, lokal juga dikosongkan/disinkronkan)
+    if (Array.isArray(branches)) {
       saveFarmBranches(branches);
       const active = getActiveBranchId();
-      // Hanya ganti activeBranch jika activeBranch tidak valid
-      if (active && active !== 'all' && !branches.some((b: any) => b.id === active)) {
+      if (branches.length === 0) {
         setActiveBranchId('all');
+      } else if (active && active !== 'all' && !branches.some((b: any) => b.id === active)) {
+        setActiveBranchId(branches[0]?.id || 'all');
       }
       updated = true;
     }
 
     // 2. Simpan Kandang dari Google Sheets jika ada
     if (Array.isArray(cages)) {
-      saveFarmCages(cages);
+      if (branches.length === 0) {
+        // Jika tidak ada cabang sama sekali di spreadsheet, kosongkan juga kandang
+        saveFarmCages([]);
+      } else {
+        // Hanya simpan kandang yang cabang induknya ada di Master Cabang
+        const validBranchIds = new Set(branches.map((b: any) => b.id));
+        const validCages = cages.filter((c: any) => validBranchIds.has(c.branchId));
+        saveFarmCages(validCages);
+      }
       updated = true;
     }
 
     // 3. Simpan Distribusi Pakan jika ada
-    if (Array.isArray(feedItems) && feedItems.length > 0) {
-      saveFeedDistribution(feedItems);
+    if (Array.isArray(feedItems)) {
+      if (branches.length === 0) {
+        saveFeedDistribution([]);
+      } else {
+        const validBranchIds = new Set(branches.map((b: any) => b.id));
+        const validFeed = feedItems.filter((f: any) => validBranchIds.has(f.branchId));
+        saveFeedDistribution(validFeed);
+      }
       updated = true;
     }
 
@@ -225,7 +240,7 @@ export async function performAutoSync(force: boolean = false): Promise<{ success
     isSyncInProgress = true;
     window.dispatchEvent(new CustomEvent('syncStateChange', { detail: { state: 'syncing' } }));
     try {
-      const pullRes = await pullDataFromSheets();
+      const pullRes = await pullDataFromSheets(force);
       return { success: pullRes.success };
     } finally {
       isSyncInProgress = false;
@@ -266,7 +281,7 @@ export async function performAutoSync(force: boolean = false): Promise<{ success
     savePendingQueue(remainingQueue);
 
     // 2. Tarik data terbaru dari Google Sheets untuk memastikan sinkronisasi dengan perangkat lain
-    await pullDataFromSheets();
+    await pullDataFromSheets(true);
 
     // Jika semua antrean berhasil diproses
     if (remainingQueue.length === 0) {

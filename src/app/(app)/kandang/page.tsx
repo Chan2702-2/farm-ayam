@@ -620,10 +620,40 @@ export default function KandangPage() {
                     </div>
                     <button
                       type="button"
-                      onClick={() => {
+                      onClick={async () => {
                         if (confirm(`Yakin ingin menghapus cabang "${b.name}" beserta semua kandangnya?`)) {
                           deleteFarmBranch(b.id);
                           loadData();
+                          markDataDirty();
+                          performAutoSync();
+
+                          const remainingBranches = getFarmBranches();
+                          const remainingCages = getFarmCages('all');
+
+                          try {
+                            await fetch('/api/sheets/sync-cabang', {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({
+                                mode: 'sync',
+                                branches: remainingBranches,
+                                userName: currentUser?.name || 'Admin',
+                              }),
+                            });
+                            await fetch('/api/sheets/sync-kandang', {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({
+                                mode: 'sync',
+                                cages: remainingCages,
+                                userName: currentUser?.name || 'Admin',
+                              }),
+                            });
+                            setToastMessage(`Cabang "${b.name}" berhasil dihapus dari sistem & Spreadsheet!`);
+                            setTimeout(() => setToastMessage(null), 3000);
+                          } catch (syncErr) {
+                            console.warn('Sync delete branch failed:', syncErr);
+                          }
                         }
                       }}
                       className="text-red-500 hover:text-red-700 p-1"

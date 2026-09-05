@@ -84,7 +84,7 @@ export const initialFarmCages: FarmCageData[] = [];
 export const initialFeedDistribution: FeedDistributionItem[] = [];
 
 // Storage version identifier: Bumps old cached dummy data in user browsers
-const DATA_VERSION = 'v2_clean_scratch_v2';
+const DATA_VERSION = 'v3_sync_sheets_v3';
 
 export function checkAndMigrateStorage(): void {
   if (typeof window !== 'undefined') {
