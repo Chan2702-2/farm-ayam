@@ -492,3 +492,22 @@ export function saveDailyEggProduction(record: DailyEggProductionRecord): void {
     window.dispatchEvent(new CustomEvent('eggProductionChange', { detail: { record } }));
   }
 }
+
+export function getAllDailyEggProductions(tanggal?: string): DailyEggProductionRecord[] {
+  if (typeof window === 'undefined') return [];
+  let list: DailyEggProductionRecord[] = [];
+  const saved = localStorage.getItem('yuki_daily_egg_productions');
+  if (saved) {
+    try {
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed)) list = parsed;
+    } catch (e) {
+      console.error('Error parsing daily egg productions', e);
+    }
+  }
+  if (tanggal) {
+    return list.filter((p) => p.tanggal === tanggal);
+  }
+  return list;
+}
+

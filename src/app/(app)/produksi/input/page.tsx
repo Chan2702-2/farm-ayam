@@ -14,6 +14,8 @@ import {
   getFarmCages,
   saveFarmCages,
   saveDailyEggProduction,
+  getDailyEggProduction,
+  formatIndonesianDate,
   FarmCageData
 } from '@/lib/data/farm-data';
 import { Modal } from '@/components/ui/Modal';
@@ -59,6 +61,10 @@ export default function InputProduksiPage() {
       if (cageParam && userList.some((c) => c.id === cageParam)) {
         defaultId = cageParam;
       }
+      const dateParam = params.get('date');
+      if (dateParam) {
+        setTanggal(dateParam);
+      }
     }
     setSelectedCageId(defaultId);
 
@@ -74,19 +80,34 @@ export default function InputProduksiPage() {
 
   useEffect(() => {
     if (selectedCage) {
-      setPagiIkat(selectedCage.pagiIkat || 0);
-      setPagiButir(selectedCage.pagiButir || 0);
-      setSoreIkat(selectedCage.soreIkat || 0);
-      setSoreButir(selectedCage.soreButir || 0);
-      setButir(selectedCage.butir || 0);
-      setRetak(selectedCage.retak || 0);
-      setPutih(selectedCage.putih || 0);
-      setKotorPutih(selectedCage.kotorPutih || 0);
-      setK(selectedCage.k || 0);
-      setR(selectedCage.r || 0);
-      setL(selectedCage.l || 0);
+      const daily = getDailyEggProduction(selectedCage.id, tanggal);
+      if (daily) {
+        setPagiIkat(daily.pagiIkat || 0);
+        setPagiButir(daily.pagiButir || 0);
+        setSoreIkat(daily.soreIkat || 0);
+        setSoreButir(daily.soreButir || 0);
+        setButir(daily.butir || 0);
+        setRetak(daily.retak || 0);
+        setPutih(daily.putih || 0);
+        setKotorPutih(daily.kotorPutih || 0);
+        setK(daily.k || 0);
+        setR(daily.r || 0);
+        setL(daily.l || 0);
+      } else {
+        setPagiIkat(0);
+        setPagiButir(0);
+        setSoreIkat(0);
+        setSoreButir(0);
+        setButir(0);
+        setRetak(0);
+        setPutih(0);
+        setKotorPutih(0);
+        setK(0);
+        setR(0);
+        setL(0);
+      }
     }
-  }, [selectedCageId]);
+  }, [selectedCageId, tanggal, selectedCage]);
 
   // Calculations: 1 Ikat = 30 butir + Butir lepas/eceran
   const totalPagi = (pagiIkat * 30) + pagiButir;
@@ -350,16 +371,40 @@ export default function InputProduksiPage() {
         populasiHidup={populasi}
       />
 
+      {/* Notice if Approved */}
+      {selectedCage && getDailyEggProduction(selectedCage.id, tanggal)?.approvalStatus === 'APPROVED' && (
+        <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-2xl flex items-start gap-2.5 text-xs text-emerald-900">
+          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+          <div>
+            <strong className="block font-bold">Data Produksi Sudah Disetujui (Close / Approved)</strong>
+            <p className="text-emerald-700 mt-0.5">
+              Data tanggal {formatIndonesianDate(tanggal)} sudah disetujui oleh Admin ({getDailyEggProduction(selectedCage.id, tanggal)?.approvedBy || 'Admin'}). Data terkunci dan tidak dapat diubah di sini.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Save Button */}
       <div className="pt-2">
-        <button
-          type="button"
-          onClick={() => setShowConfirmModal(true)}
-          className="w-full h-13 rounded-2xl bg-[#0284c7] hover:bg-[#0369a1] active:scale-95 text-white font-bold text-sm shadow-md shadow-sky-600/30 flex items-center justify-center gap-2 transition-all"
-        >
-          <Save className="w-4 h-4" />
-          <span>Simpan Data Produksi</span>
-        </button>
+        {selectedCage && getDailyEggProduction(selectedCage.id, tanggal)?.approvalStatus === 'APPROVED' ? (
+          <button
+            type="button"
+            disabled
+            className="w-full h-13 rounded-2xl bg-slate-200 text-slate-500 font-bold text-sm cursor-not-allowed flex items-center justify-center gap-2"
+          >
+            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+            <span>Terkunci (Sudah Di-Approve Admin)</span>
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setShowConfirmModal(true)}
+            className="w-full h-13 rounded-2xl bg-[#0284c7] hover:bg-[#0369a1] active:scale-95 text-white font-bold text-sm shadow-md shadow-sky-600/30 flex items-center justify-center gap-2 transition-all"
+          >
+            <Save className="w-4 h-4" />
+            <span>Simpan Data Produksi</span>
+          </button>
+        )}
       </div>
 
       {/* Modal Pilih Kandang */}
