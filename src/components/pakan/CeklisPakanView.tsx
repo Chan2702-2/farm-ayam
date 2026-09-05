@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState } from 'react';
 import {
@@ -588,9 +588,13 @@ export function CeklisPakanView({
                   <input
                     type="number"
                     min="0"
-                    required
-                    value={formMasukSak}
-                    onChange={(e) => handleSakChange(Math.max(0, Number(e.target.value) || 0))}
+                    placeholder="0"
+                    value={formMasukSak === 0 ? '' : formMasukSak}
+                    onFocus={(e) => e.target.select()}
+                    onChange={(e) => {
+                      const clean = e.target.value.replace(/^0+(?=\d)/, '');
+                      handleSakChange(Math.max(0, parseInt(clean, 10) || 0));
+                    }}
                     className="w-full h-11 px-3 text-center font-bold text-sm bg-slate-50 rounded-xl border border-slate-200 outline-none focus:border-amber-500"
                   />
                 </div>
@@ -604,9 +608,13 @@ export function CeklisPakanView({
                   type="number"
                   min="0"
                   step="0.1"
-                  required
-                  value={formMasukKg}
-                  onChange={(e) => setFormMasukKg(Math.max(0, Number(e.target.value) || 0))}
+                  placeholder="0"
+                  value={formMasukKg === 0 ? '' : formMasukKg}
+                  onFocus={(e) => e.target.select()}
+                  onChange={(e) => {
+                    const clean = e.target.value.replace(/^0+(?=\d)/, '');
+                    setFormMasukKg(Math.max(0, parseFloat(clean) || 0));
+                  }}
                   className="w-full h-11 px-3 text-center font-bold text-sm bg-slate-50 rounded-xl border border-slate-200 outline-none focus:border-amber-500"
                 />
               </div>
@@ -621,9 +629,13 @@ export function CeklisPakanView({
                   type="number"
                   min="0"
                   step="0.1"
-                  required
-                  value={formSisaKg}
-                  onChange={(e) => setFormSisaKg(Math.max(0, Number(e.target.value) || 0))}
+                  placeholder="0"
+                  value={formSisaKg === 0 ? '' : formSisaKg}
+                  onFocus={(e) => e.target.select()}
+                  onChange={(e) => {
+                    const clean = e.target.value.replace(/^0+(?=\d)/, '');
+                    setFormSisaKg(Math.max(0, parseFloat(clean) || 0));
+                  }}
                   className="w-full h-11 px-3.5 font-bold text-sm bg-slate-50 rounded-xl border border-slate-200 outline-none focus:border-amber-500"
                 />
                 <span className="absolute right-3.5 top-3 text-xs text-slate-400 font-semibold">

@@ -88,8 +88,14 @@ export function EggStepper({
             <input
               type="number"
               min="0"
-              value={valueIkat}
-              onChange={(e) => onChange(Math.max(0, Number(e.target.value) || 0))}
+              placeholder="0"
+              value={valueIkat === 0 ? '' : valueIkat}
+              onFocus={(e) => e.target.select()}
+              onChange={(e) => {
+                const raw = e.target.value.replace(/^0+(?=\d)/, '');
+                const num = parseInt(raw, 10);
+                onChange(isNaN(num) ? 0 : Math.max(0, num));
+              }}
               className="w-20 sm:w-24 text-center font-jakarta font-extrabold text-2xl sm:text-3xl text-[#0284c7] bg-transparent outline-none p-0"
             />
             <span className="text-[11px] text-slate-400 block font-medium">
@@ -152,8 +158,14 @@ export function EggStepper({
               <input
                 type="number"
                 min="0"
-                value={valueButir || 0}
-                onChange={(e) => onChangeButir(Math.max(0, Number(e.target.value) || 0))}
+                placeholder="0"
+                value={!valueButir ? '' : valueButir}
+                onFocus={(e) => e.target.select()}
+                onChange={(e) => {
+                  const raw = e.target.value.replace(/^0+(?=\d)/, '');
+                  const num = parseInt(raw, 10);
+                  onChangeButir(isNaN(num) ? 0 : Math.max(0, num));
+                }}
                 className="w-16 sm:w-20 text-center font-jakarta font-bold text-xl sm:text-2xl text-amber-900 bg-transparent outline-none p-0"
               />
               <span className="text-[10px] text-amber-700/80 block font-medium">

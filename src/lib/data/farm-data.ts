@@ -372,3 +372,123 @@ export function calculateCageSummary(cages: FarmCageData[]) {
     avgWeight,
   };
 }
+
+export interface DailyEggProductionRecord {
+  id: string;
+  tanggal: string; // YYYY-MM-DD
+  cageId: string;
+  cageName: string;
+  branchId: string;
+  branchName: string;
+  pagiIkat: number;
+  pagiButir: number;
+  soreIkat: number;
+  soreButir: number;
+  butir: number;
+  retak: number;
+  putih: number;
+  kotorPutih: number;
+  k: number;
+  r: number;
+  l: number;
+  totalProduksi: number;
+  populasiHidup: number;
+  actPercent: number;
+  standardPercent: number;
+  approvalStatus: 'PENDING' | 'APPROVED';
+  approvedBy?: string;
+  approvedAt?: string;
+  petugas?: string;
+  updatedAt?: string;
+}
+
+export function formatIndonesianDate(dateStr: string): string {
+  if (!dateStr) return '';
+  const parts = dateStr.split('-');
+  if (parts.length !== 3) return dateStr;
+  const year = Number(parts[0]);
+  const month = Number(parts[1]);
+  const day = Number(parts[2]);
+  if (!year || !month || !day) return dateStr;
+  const monthNames = [
+    'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+    'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+  ];
+  return `${day} ${monthNames[month - 1]} ${year}`;
+}
+
+export function getDailyEggProduction(cageId: string, tanggal: string): DailyEggProductionRecord | null {
+  if (typeof window === 'undefined') return null;
+  let list: DailyEggProductionRecord[] = [];
+  const saved = localStorage.getItem('yuki_daily_egg_productions');
+  if (saved) {
+    try {
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed)) list = parsed;
+    } catch (e) {
+      console.error('Error parsing daily egg productions', e);
+    }
+  }
+
+  const existing = list.find((p) => p.cageId === cageId && p.tanggal === tanggal);
+  if (existing) return existing;
+
+  const cage = getCageById(cageId);
+  if (cage && (cage.tanggalProduksi === tanggal || (!cage.tanggalProduksi && tanggal === new Date().toISOString().split('T')[0]))) {
+    if (cage.totalProduksi > 0 || (cage.pagiIkat || 0) > 0 || (cage.soreIkat || 0) > 0) {
+      return {
+        id: `prod-${cage.id}-${tanggal}`,
+        tanggal,
+        cageId: cage.id,
+        cageName: cage.name,
+        branchId: cage.branchId,
+        branchName: cage.branchName,
+        pagiIkat: cage.pagiIkat || 0,
+        pagiButir: cage.pagiButir || 0,
+        soreIkat: cage.soreIkat || 0,
+        soreButir: cage.soreButir || 0,
+        butir: cage.butir || 0,
+        retak: cage.retak || 0,
+        putih: cage.putih || 0,
+        kotorPutih: cage.kotorPutih || 0,
+        k: cage.k || 0,
+        r: cage.r || 0,
+        l: cage.l || 0,
+        totalProduksi: cage.totalProduksi || 0,
+        populasiHidup: cage.populasiHidup || cage.kapasitas || 4000,
+        actPercent: cage.actPercent || 0,
+        standardPercent: cage.standardPercent || 95.5,
+        approvalStatus: 'PENDING',
+        petugas: cage.operator || 'Pengawas',
+        updatedAt: new Date().toISOString(),
+      };
+    }
+  }
+
+  return null;
+}
+
+export function saveDailyEggProduction(record: DailyEggProductionRecord): void {
+  if (typeof window !== 'undefined') {
+    let list: DailyEggProductionRecord[] = [];
+    const saved = localStorage.getItem('yuki_daily_egg_productions');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) list = parsed;
+      } catch (e) {
+        console.error('Error parsing daily egg productions', e);
+      }
+    }
+
+    const idx = list.findIndex((p) => p.cageId === record.cageId && p.tanggal === record.tanggal);
+    if (idx >= 0) {
+      list[idx] = record;
+    } else {
+      list.unshift(record);
+    }
+
+    localStorage.setItem('yuki_daily_egg_productions', JSON.stringify(list));
+    window.dispatchEvent(new CustomEvent('eggProductionChange', { detail: { record } }));
+  }
+}

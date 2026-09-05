@@ -21,6 +21,8 @@ export interface ProduksiSheetRow {
   populasiHidup: number;
   actPercent: number;
   standardPercent: number;
+  statusApproval?: string;
+  approvedBy?: string;
   userName: string;
 }
 
@@ -161,7 +163,9 @@ const PRODUKSI_HEADERS = [
   'Populasi Hidup',
   'Hen-Day ACT (%)',
   'Standard (%)',
-  'Petugas Pengawas'
+  'Petugas Pengawas',
+  'Status Approval',
+  'Disetujui Oleh'
 ];
 
 const PAKAN_HEADERS = [
@@ -396,11 +400,13 @@ export async function appendProduksiRows(rows: ProduksiSheetRow[]) {
     r.actPercent,
     r.standardPercent,
     r.userName,
+    r.statusApproval || 'Belum Disetujui',
+    r.approvedBy || '-',
   ]);
 
   return sheets.spreadsheets.values.append({
     spreadsheetId,
-    range: `'${sheetTitle}'!A:V`,
+    range: `'${sheetTitle}'!A:X`,
     valueInputOption: 'USER_ENTERED',
     insertDataOption: 'INSERT_ROWS',
     requestBody: {

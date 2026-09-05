@@ -78,23 +78,13 @@ export default function ProduksiOverviewPage() {
   return (
     <div className="pt-16 sm:pt-20 pb-28 px-3.5 sm:px-4 space-y-3.5 sm:space-y-4">
       {/* Top Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="font-jakarta font-bold text-xl text-slate-900">
-            Produksi Telur
-          </h1>
-          <p className="text-xs text-slate-500 font-medium">
-            Koleksi Harian &bull; {currentBranchObj?.name || 'Semua Cabang'}
-          </p>
-        </div>
-
-        <Link
-          href="/produksi/input"
-          className="flex items-center gap-1 px-3 py-2 rounded-xl bg-[#0284c7] hover:bg-[#0369a1] text-white text-xs font-bold shadow-sm shadow-sky-600/25 active:scale-95 transition-all"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Input Telur</span>
-        </Link>
+      <div>
+        <h1 className="font-jakarta font-bold text-xl text-slate-900">
+          Produksi Telur
+        </h1>
+        <p className="text-xs text-slate-500 font-medium">
+          Koleksi Harian &bull; {currentBranchObj?.name || 'Semua Cabang'}
+        </p>
       </div>
 
       {/* Multi-Branch Tabs - ONLY FOR ADMIN */}

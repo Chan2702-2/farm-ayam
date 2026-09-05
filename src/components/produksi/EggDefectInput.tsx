@@ -63,8 +63,14 @@ export function EggDefectInput({
               <input
                 type="number"
                 min="0"
-                value={it.value}
-                onChange={(e) => onChange(it.key, Math.max(0, Number(e.target.value) || 0))}
+                placeholder="0"
+                value={it.value === 0 ? '' : it.value}
+                onFocus={(e) => e.target.select()}
+                onChange={(e) => {
+                  const raw = e.target.value.replace(/^0+(?=\d)/, '');
+                  const num = parseInt(raw, 10);
+                  onChange(it.key, isNaN(num) ? 0 : Math.max(0, num));
+                }}
                 className="w-full h-8 px-2 text-center font-bold text-xs bg-white rounded-lg border border-slate-200 text-slate-800 outline-none focus:border-[#0284c7]"
               />
             </div>

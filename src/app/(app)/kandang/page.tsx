@@ -795,8 +795,9 @@ export default function KandangPage() {
                 min="10"
                 placeholder="Kapasitas Kandang"
                 value={newKapasitas}
+                onFocus={(e) => e.target.select()}
                 onChange={(e) => {
-                  const val = e.target.value;
+                  const val = e.target.value.replace(/^0+(?=\d)/, '');
                   setNewKapasitas(val);
                   if (!newPopulasiAwal || newPopulasiAwal === newKapasitas) {
                     setNewPopulasiAwal(val);
@@ -817,7 +818,8 @@ export default function KandangPage() {
                 min="1"
                 placeholder="Kapasitas Awal"
                 value={newPopulasiAwal}
-                onChange={(e) => setNewPopulasiAwal(e.target.value)}
+                onFocus={(e) => e.target.select()}
+                onChange={(e) => setNewPopulasiAwal(e.target.value.replace(/^0+(?=\d)/, ''))}
                 className="w-full h-11 px-3 rounded-xl border border-slate-200 bg-slate-50 text-sm font-semibold text-slate-800 outline-none focus:bg-white focus:border-[#0284c7]"
               />
               <span className="text-[10px] text-slate-400 mt-0.5 block">Jumlah ayam saat masuk</span>
@@ -862,7 +864,8 @@ export default function KandangPage() {
                 min="0"
                 max="100"
                 value={newUmurMasukMgg}
-                onChange={(e) => handleUmurMasukChange(e.target.value)}
+                onFocus={(e) => e.target.select()}
+                onChange={(e) => handleUmurMasukChange(e.target.value.replace(/^0+(?=\d)/, ''))}
                 placeholder="Umur Saat Masuk"
                 className="w-full h-11 px-3 rounded-xl border border-slate-200 bg-slate-50 text-sm font-semibold text-slate-800 outline-none focus:bg-white focus:border-[#0284c7]"
               />
@@ -881,7 +884,8 @@ export default function KandangPage() {
                 max="150"
                 placeholder="Umur Saat Ini"
                 value={newUmurMgg}
-                onChange={(e) => setNewUmurMgg(e.target.value)}
+                onFocus={(e) => e.target.select()}
+                onChange={(e) => setNewUmurMgg(e.target.value.replace(/^0+(?=\d)/, ''))}
                 className="w-full h-11 px-3 rounded-xl border border-sky-300 bg-sky-50/50 text-sm font-bold text-[#0369a1] outline-none focus:bg-white focus:border-[#0284c7]"
               />
               <span className="text-[10px] text-sky-700 font-medium mt-0.5 block truncate">

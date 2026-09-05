@@ -13,6 +13,7 @@ import {
 import {
   getFarmCages,
   saveFarmCages,
+  saveDailyEggProduction,
   FarmCageData
 } from '@/lib/data/farm-data';
 import { Modal } from '@/components/ui/Modal';
@@ -133,6 +134,34 @@ export default function InputProduksiPage() {
     saveFarmCages(updatedCages);
 
     const user = getCurrentUser();
+
+    saveDailyEggProduction({
+      id: `prod-${selectedCage?.id || selectedCageId}-${tanggal}`,
+      tanggal,
+      cageId: selectedCage?.id || selectedCageId,
+      cageName: selectedCage?.name || 'Kandang',
+      branchId: selectedCage?.branchId || 'branch-1',
+      branchName: selectedCage?.branchName || 'Cabang',
+      pagiIkat,
+      pagiButir,
+      soreIkat,
+      soreButir,
+      butir: totalButirEcer,
+      retak,
+      putih,
+      kotorPutih,
+      k,
+      r,
+      l,
+      totalProduksi,
+      populasiHidup: populasi,
+      actPercent,
+      standardPercent,
+      approvalStatus: 'PENDING',
+      petugas: user?.name || 'Pengawas Lapangan',
+      updatedAt: new Date().toISOString(),
+    });
+
     addActivityLog({
       userName: user?.name || 'Pengawas Lapangan',
       userRole: user?.role || 'PENGAWAS',

@@ -173,8 +173,13 @@ export default function PopulasiAfkirPage() {
             type="number"
             required
             min="1"
-            value={jumlahAfkir}
-            onChange={(e) => setJumlahAfkir(Number(e.target.value) || 0)}
+            placeholder="0"
+            value={jumlahAfkir === 0 ? '' : jumlahAfkir}
+            onFocus={(e) => e.target.select()}
+            onChange={(e) => {
+              const clean = e.target.value.replace(/^0+(?=\d)/, '');
+              setJumlahAfkir(Math.max(0, parseInt(clean, 10) || 0));
+            }}
             className="w-full h-11 px-3.5 rounded-xl border border-slate-200 bg-slate-50 text-base font-bold text-slate-900 outline-none focus:bg-white focus:border-[#0284c7]"
           />
         </div>
@@ -204,8 +209,10 @@ export default function PopulasiAfkirPage() {
             <input
               type="number"
               step="0.05"
+              placeholder="0"
               value={beratRata}
-              onChange={(e) => setBeratRata(e.target.value)}
+              onFocus={(e) => e.target.select()}
+              onChange={(e) => setBeratRata(e.target.value.replace(/^0+(?=\d)/, ''))}
               className="w-full h-11 px-3.5 rounded-xl border border-slate-200 bg-slate-50 text-sm font-semibold text-slate-800 outline-none"
             />
           </div>

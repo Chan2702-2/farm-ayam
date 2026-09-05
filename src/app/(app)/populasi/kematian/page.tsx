@@ -218,8 +218,13 @@ export default function CatatKematianPage() {
             <input
               type="number"
               min="0"
-              value={mati}
-              onChange={(e) => setMati(Number(e.target.value) || 0)}
+              placeholder="0"
+              value={mati === 0 ? '' : mati}
+              onFocus={(e) => e.target.select()}
+              onChange={(e) => {
+                const clean = e.target.value.replace(/^0+(?=\d)/, '');
+                setMati(Math.max(0, parseInt(clean, 10) || 0));
+              }}
               className="w-24 text-center font-jakarta font-extrabold text-4xl text-red-600 bg-transparent outline-none p-0"
             />
             <span className="text-xs text-slate-400 font-medium block">Ekor Mati</span>

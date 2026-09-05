@@ -179,8 +179,13 @@ export default function BeratPage() {
               type="number"
               required
               min="10"
-              value={sampelEkor}
-              onChange={(e) => setSampelEkor(Number(e.target.value) || 0)}
+              placeholder="0"
+              value={sampelEkor === 0 ? '' : sampelEkor}
+              onFocus={(e) => e.target.select()}
+              onChange={(e) => {
+                const clean = e.target.value.replace(/^0+(?=\d)/, '');
+                setSampelEkor(Math.max(0, parseInt(clean, 10) || 0));
+              }}
               className="w-full h-11 px-3.5 rounded-xl border border-slate-200 bg-slate-50 text-sm font-bold text-slate-900 outline-none"
             />
           </div>
@@ -193,8 +198,10 @@ export default function BeratPage() {
               type="number"
               step="0.1"
               required
+              placeholder="0"
               value={totalBeratKg}
-              onChange={(e) => setTotalBeratKg(e.target.value)}
+              onFocus={(e) => e.target.select()}
+              onChange={(e) => setTotalBeratKg(e.target.value.replace(/^0+(?=\d)/, ''))}
               className="w-full h-11 px-3.5 rounded-xl border border-slate-200 bg-slate-50 text-sm font-bold text-slate-900 outline-none"
             />
           </div>
@@ -233,8 +240,10 @@ export default function BeratPage() {
               type="number"
               min="50"
               max="100"
+              placeholder="0"
               value={keseragaman}
-              onChange={(e) => setKeseragaman(e.target.value)}
+              onFocus={(e) => e.target.select()}
+              onChange={(e) => setKeseragaman(e.target.value.replace(/^0+(?=\d)/, ''))}
               className="w-24 h-11 px-3 rounded-xl border border-slate-200 bg-slate-50 text-sm font-bold text-slate-900 outline-none text-center"
             />
             <span className="text-xs text-slate-500 font-medium">

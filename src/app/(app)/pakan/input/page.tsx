@@ -634,8 +634,13 @@ export default function InputPakanPage() {
                 </label>
                 <input
                   type="number"
-                  value={umurMgg}
-                  onChange={(e) => setUmurMgg(Number(e.target.value) || 0)}
+                  placeholder="0"
+                  value={umurMgg === 0 ? '' : umurMgg}
+                  onFocus={(e) => e.target.select()}
+                  onChange={(e) => {
+                    const clean = e.target.value.replace(/^0+(?=\d)/, '');
+                    setUmurMgg(Math.max(0, parseInt(clean, 10) || 0));
+                  }}
                   className="w-full h-11 px-3 rounded-xl bg-slate-50 border border-slate-200 text-sm font-bold text-slate-800 focus:outline-none focus:border-amber-500"
                 />
               </div>
@@ -646,8 +651,13 @@ export default function InputPakanPage() {
                 </label>
                 <input
                   type="number"
-                  value={populasi}
-                  onChange={(e) => setPopulasi(Number(e.target.value) || 0)}
+                  placeholder="0"
+                  value={populasi === 0 ? '' : populasi}
+                  onFocus={(e) => e.target.select()}
+                  onChange={(e) => {
+                    const clean = e.target.value.replace(/^0+(?=\d)/, '');
+                    setPopulasi(Math.max(0, parseInt(clean, 10) || 0));
+                  }}
                   className="w-full h-11 px-3 rounded-xl bg-slate-50 border border-slate-200 text-sm font-bold text-slate-800 focus:outline-none focus:border-amber-500"
                 />
               </div>
@@ -674,8 +684,13 @@ export default function InputPakanPage() {
                 </button>
                 <input
                   type="number"
-                  value={konsumsiGr}
-                  onChange={(e) => setKonsumsiGr(Number(e.target.value) || 0)}
+                  placeholder="0"
+                  value={konsumsiGr === 0 ? '' : konsumsiGr}
+                  onFocus={(e) => e.target.select()}
+                  onChange={(e) => {
+                    const clean = e.target.value.replace(/^0+(?=\d)/, '');
+                    setKonsumsiGr(Math.max(0, parseInt(clean, 10) || 0));
+                  }}
                   className="flex-1 h-11 text-center font-mono font-bold text-base bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:border-amber-500"
                 />
                 <button
@@ -714,9 +729,13 @@ export default function InputPakanPage() {
               <input
                 type="number"
                 step="0.1"
-                value={sisaKg}
-                onChange={(e) => setSisaKg(Number(e.target.value) || 0)}
                 placeholder="0"
+                value={sisaKg === 0 ? '' : sisaKg}
+                onFocus={(e) => e.target.select()}
+                onChange={(e) => {
+                  const clean = e.target.value.replace(/^0+(?=\d)/, '');
+                  setSisaKg(Math.max(0, parseFloat(clean) || 0));
+                }}
                 className="w-full h-11 px-3 rounded-xl bg-slate-50 border border-slate-200 text-sm font-bold text-slate-800 focus:outline-none focus:border-amber-500"
               />
             </div>
@@ -809,9 +828,12 @@ export default function InputPakanPage() {
                         <td className="p-2.5 border-r border-slate-100 text-center font-mono font-bold text-slate-800">
                           <input
                             type="number"
-                            value={row.populasi}
+                            placeholder="0"
+                            value={row.populasi === 0 ? '' : row.populasi}
+                            onFocus={(e) => e.target.select()}
                             onChange={(e) => {
-                              const val = Number(e.target.value) || 0;
+                              const clean = e.target.value.replace(/^0+(?=\d)/, '');
+                              const val = Math.max(0, parseInt(clean, 10) || 0);
                               setBatchRows((prev) => ({
                                 ...prev,
                                 [c.id]: { ...prev[c.id], populasi: val },
@@ -823,9 +845,12 @@ export default function InputPakanPage() {
                         <td className="p-2.5 border-r border-slate-100 text-center">
                           <input
                             type="number"
-                            value={row.konsumsiGr}
+                            placeholder="0"
+                            value={row.konsumsiGr === 0 ? '' : row.konsumsiGr}
+                            onFocus={(e) => e.target.select()}
                             onChange={(e) => {
-                              const val = Number(e.target.value) || 0;
+                              const clean = e.target.value.replace(/^0+(?=\d)/, '');
+                              const val = Math.max(0, parseInt(clean, 10) || 0);
                               setBatchRows((prev) => ({
                                 ...prev,
                                 [c.id]: { ...prev[c.id], konsumsiGr: val },

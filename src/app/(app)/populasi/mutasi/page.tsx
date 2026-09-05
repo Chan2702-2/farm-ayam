@@ -227,8 +227,13 @@ export default function PopulasiMutasiPage() {
             type="number"
             required
             min="1"
-            value={jumlah}
-            onChange={(e) => setJumlah(Number(e.target.value) || 0)}
+            placeholder="0"
+            value={jumlah === 0 ? '' : jumlah}
+            onFocus={(e) => e.target.select()}
+            onChange={(e) => {
+              const clean = e.target.value.replace(/^0+(?=\d)/, '');
+              setJumlah(Math.max(0, parseInt(clean, 10) || 0));
+            }}
             className="w-full h-11 px-3.5 rounded-xl border border-slate-200 bg-slate-50 text-base font-bold text-slate-900 outline-none focus:bg-white focus:border-[#0284c7]"
           />
         </div>

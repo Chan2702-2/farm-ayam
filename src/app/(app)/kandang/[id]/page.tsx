@@ -15,9 +15,10 @@ import {
   Pencil,
 } from 'lucide-react';
 import { getCageById, getFarmCages, getFarmBranches, FarmCageData } from '@/lib/data/farm-data';
-import { getCurrentUser } from '@/lib/data/auth-users';
+import { getCurrentUser, AuthUser } from '@/lib/data/auth-users';
 import { pullDataFromSheets } from '@/lib/sync/auto-sync';
 import { EditKandangModal } from '@/components/kandang/EditKandangModal';
+import { DetailProduksiTelurCard } from '@/components/kandang/DetailProduksiTelurCard';
 
 export default function KandangDetailPage() {
   const params = useParams();
@@ -25,10 +26,12 @@ export default function KandangDetailPage() {
   const cageId = Array.isArray(params?.id) ? params.id[0] : (params?.id as string);
 
   const [cage, setCage] = useState<FarmCageData | null>(null);
+  const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [isEditOpen, setIsEditOpen] = useState(false);
 
   useEffect(() => {
+    setCurrentUser(getCurrentUser());
     if (!cageId) return;
 
     const findCage = () => {
@@ -255,61 +258,6 @@ export default function KandangDetailPage() {
         </div>
       </div>
 
-      {/* Production Highlight Card */}
-      <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 space-y-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-sky-50 text-[#0284c7] flex items-center justify-center">
-              <Egg className="w-4 h-4" />
-            </div>
-            <div>
-              <h3 className="font-jakarta font-bold text-sm text-slate-900">
-                Produksi Telur Hari Ini
-              </h3>
-              <p className="text-[11px] text-slate-400">Pagi & Sore Terkoleksi</p>
-            </div>
-          </div>
-          <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${
-            isBelow ? 'bg-amber-100 text-amber-800' : 'bg-sky-100 text-[#0284c7]'
-          }`}>
-            ACT {(cage.actPercent || 0).toFixed(2)}%
-          </span>
-        </div>
-
-        <div className="flex items-baseline justify-between pt-1">
-          <div>
-            <span className="font-jakarta font-extrabold text-2xl text-[#0369a1]">
-              {(totalTelur || 0).toLocaleString('id-ID')}
-            </span>
-            <span className="text-xs font-semibold text-slate-500 ml-1">butir telur</span>
-          </div>
-          <div className="text-right text-xs">
-            <span className="text-slate-400">Standar Target:</span>
-            <strong className="text-slate-800 ml-1">{cage.standardPercent || 95.5}%</strong>
-          </div>
-        </div>
-
-        {/* Morning vs Afternoon Bar */}
-        <div className="p-3 bg-sky-50/60 rounded-xl space-y-2 text-xs">
-          <div className="flex justify-between font-semibold">
-            <span className="text-sky-900">
-              Pagi: {pagiButir.toLocaleString('id-ID')} btr ({pagiRatio}%)
-            </span>
-            <span className="text-sky-700">
-              Sore: {soreButir.toLocaleString('id-ID')} btr ({soreRatio}%)
-            </span>
-          </div>
-          <div className="w-full bg-slate-200 h-2 rounded-full flex overflow-hidden">
-            <div className="bg-[#0284c7] h-full" style={{ width: `${pagiRatio}%` }} />
-            <div className="bg-sky-300 h-full" style={{ width: `${soreRatio}%` }} />
-          </div>
-          <div className="flex justify-between text-[11px] text-slate-500">
-            <span>Retak: {cage.retak || 0} btr &bull; Kotor: {cage.kotorPutih || 0} btr</span>
-            <span className="text-[#0284c7] font-semibold">Grade A: 98.4%</span>
-          </div>
-        </div>
-      </div>
-
       {/* Quick Action Buttons for Cage */}
       <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 space-y-2.5">
         <h3 className="font-jakarta font-bold text-xs text-slate-400 uppercase tracking-wider">
@@ -333,6 +281,13 @@ export default function KandangDetailPage() {
           </Link>
         </div>
       </div>
+
+      {/* Detail Produksi Telur per Tanggal with Admin Approval & Edit */}
+      <DetailProduksiTelurCard
+        cage={cage}
+        currentUser={currentUser}
+        onUpdateCage={(updated) => setCage(updated)}
+      />
 
       {/* Modal Edit Kandang */}
       <EditKandangModal
