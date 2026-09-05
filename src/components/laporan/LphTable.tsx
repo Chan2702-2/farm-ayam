@@ -158,8 +158,8 @@ export function LphTable({ cages, summary }: LphTableProps) {
         {/* Total Footer Row */}
         <tfoot>
           <tr className="bg-[#0369a1] text-white font-extrabold text-xs">
-            <td className="sticky left-0 z-20 bg-[#0369a1] py-3 px-3.5 border-r border-sky-600 min-w-[175px] max-w-[200px] shadow-[3px_0_6px_-2px_rgba(0,0,0,0.25)]">
-              TOTAL KONSOLIDASI ({cages.length} KANDANG)
+            <td className="sticky left-0 z-20 bg-[#0369a1] py-3 px-3.5 border-r border-sky-600 min-w-[175px] max-w-[200px] shadow-[3px_0_6px_-2px_rgba(0,0,0,0.25)] font-jakarta">
+              Total
             </td>
             <td className="py-3 px-2 text-center border-r border-sky-600 font-mono">
               {summary.totalKapasitas.toLocaleString('id-ID')}

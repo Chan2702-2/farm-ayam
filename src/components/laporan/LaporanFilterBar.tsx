@@ -9,7 +9,7 @@ interface LaporanFilterBarProps {
   activeBranch: string;
   onSelectBranch: (id: string) => void;
   selectedDate: string;
-  onOpenExport: () => void;
+  onOpenPeriodModal: () => void;
   currentBranchName?: string;
 }
 
@@ -18,7 +18,7 @@ export function LaporanFilterBar({
   activeBranch,
   onSelectBranch,
   selectedDate,
-  onOpenExport,
+  onOpenPeriodModal,
   currentBranchName,
 }: LaporanFilterBarProps) {
   const displayDate = React.useMemo(() => {
@@ -67,14 +67,21 @@ export function LaporanFilterBar({
       )}
 
       {/* Date & Branch Status Banner */}
-      <div className="bg-white p-3 rounded-2xl border border-slate-100 shadow-xs flex items-center justify-between">
+      <div
+        onClick={onOpenPeriodModal}
+        className="bg-white p-3 rounded-2xl border border-slate-100 shadow-xs flex items-center justify-between cursor-pointer hover:border-sky-200 transition-all group"
+      >
         <div className="flex items-center gap-2 text-xs font-semibold text-slate-700 min-w-0 pr-2">
-          <Calendar className="w-4 h-4 text-[#0284c7] shrink-0" />
+          <Calendar className="w-4 h-4 text-[#0284c7] shrink-0 group-hover:scale-110 transition-transform" />
           <span className="truncate">{displayDate} &bull; {currentBranchName || 'Semua Cabang'}</span>
         </div>
         <button
-          onClick={onOpenExport}
-          className="text-xs font-bold text-[#0284c7] hover:underline shrink-0"
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onOpenPeriodModal();
+          }}
+          className="text-xs font-bold text-[#0284c7] bg-sky-50 hover:bg-sky-100 px-2.5 py-1 rounded-lg transition-colors shrink-0"
         >
           Ganti Periode
         </button>

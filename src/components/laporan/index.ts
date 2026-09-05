@@ -5,3 +5,4 @@ export * from './LphExportModal';
 export * from './LphImportModal';
 export * from './LaporanFilterBar';
 export * from './GoogleSheetsModal';
+export * from './PeriodeFilterModal';

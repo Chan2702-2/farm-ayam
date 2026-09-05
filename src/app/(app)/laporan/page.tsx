@@ -21,6 +21,8 @@ import {
   setActiveBranchId,
   getFeedDistribution,
   calculateFeedSummary,
+  getAllDailyEggProductions,
+  getDailyEggProduction,
   FarmCageData,
   FarmBranch,
   FeedDistributionItem
@@ -32,7 +34,8 @@ import {
   LphExportModal,
   LphImportModal,
   LaporanFilterBar,
-  GoogleSheetsModal
+  GoogleSheetsModal,
+  PeriodeFilterModal
 } from '@/components/laporan';
 import { getCurrentUser, filterCagesForUser, filterFeedForUser, AuthUser } from '@/lib/data/auth-users';
 
@@ -43,24 +46,59 @@ export default function LaporanPage() {
   const [cages, setCages] = useState<FarmCageData[]>([]);
   const [feedItems, setFeedItems] = useState<FeedDistributionItem[]>([]);
   const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().split('T')[0]);
+  const [showPeriodModal, setShowPeriodModal] = useState(false);
   const [showExportModal, setShowExportModal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
   const [showSheetsModal, setShowSheetsModal] = useState(false);
+  const [exportingLph, setExportingLph] = useState(false);
   const [exportingPakan, setExportingPakan] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
 
-  const loadData = () => {
+  const loadData = (branchIdToUse?: string, dateToUse?: string) => {
     const user = getCurrentUser();
     setCurrentUser(user);
     const brs = getFarmBranches();
     setBranches(brs);
-    const active = user && user.role === 'PENGAWAS' ? user.branchId : getActiveBranchId();
+    const active = branchIdToUse ?? (user && user.role === 'PENGAWAS' ? user.branchId : getActiveBranchId());
     setActiveBranch(active);
+    const targetDate = dateToUse ?? selectedDate;
+
     const branchCages = getFarmCages(active);
-    setCages(filterCagesForUser(branchCages, user));
+    const userCages = filterCagesForUser(branchCages, user);
+
+    // Overlay daily production for targetDate if available
+    const cagesForDate = userCages.map((c) => {
+      const prod = getDailyEggProduction(c.id, targetDate);
+      if (prod) {
+        return {
+          ...c,
+          pagiIkat: prod.pagiIkat,
+          pagiButir: prod.pagiButir,
+          soreIkat: prod.soreIkat,
+          soreButir: prod.soreButir,
+          butir: prod.butir,
+          retak: prod.retak,
+          putih: prod.putih,
+          kotorPutih: prod.kotorPutih,
+          k: prod.k,
+          r: prod.r,
+          l: prod.l,
+          totalProduksi: prod.totalProduksi,
+          populasiHidup: prod.populasiHidup || c.populasiHidup,
+          actPercent: prod.actPercent,
+          standardPercent: prod.standardPercent,
+          tanggalProduksi: prod.tanggal,
+        };
+      }
+      return c;
+    });
+
+    setCages(cagesForDate);
     const branchFeed = getFeedDistribution(active);
-    setFeedItems(filterFeedForUser(branchFeed, user));
+    const userFeed = filterFeedForUser(branchFeed, user);
+    const feedForDate = userFeed.filter((f) => !f.tanggal || f.tanggal === targetDate);
+    setFeedItems(feedForDate.length > 0 ? feedForDate : userFeed);
   };
 
   useEffect(() => {
@@ -69,23 +107,40 @@ export default function LaporanPage() {
     const handleBranchChange = () => loadData();
     const handleFeedChange = () => loadData();
     const handleAuthChange = () => loadData();
+    const handleEggProdChange = () => loadData();
 
     window.addEventListener('branchChange', handleBranchChange);
     window.addEventListener('feedChange', handleFeedChange);
     window.addEventListener('authChange', handleAuthChange);
+    window.addEventListener('eggProductionChange', handleEggProdChange);
 
     return () => {
       window.removeEventListener('branchChange', handleBranchChange);
       window.removeEventListener('feedChange', handleFeedChange);
       window.removeEventListener('authChange', handleAuthChange);
+      window.removeEventListener('eggProductionChange', handleEggProdChange);
     };
-  }, []);
+  }, [selectedDate]);
 
   const handleSelectBranch = (id: string) => {
     setActiveBranch(id);
     setActiveBranchId(id);
-    setCages(getFarmCages(id));
-    setFeedItems(getFeedDistribution(id));
+    loadData(id, selectedDate);
+  };
+
+  const handleApplyPeriod = (newDate: string, newBranch: string) => {
+    setSelectedDate(newDate);
+    setActiveBranch(newBranch);
+    setActiveBranchId(newBranch);
+    loadData(newBranch, newDate);
+
+    const branchLabel =
+      newBranch === 'all'
+        ? 'Semua Cabang'
+        : branches.find((b) => b.id === newBranch)?.name || 'Cabang';
+
+    setToastMessage(`Periode diperbarui: ${newDate} • ${branchLabel}`);
+    setTimeout(() => setToastMessage(null), 3000);
   };
 
   const handleImportSuccess = (importedCount: number) => {
@@ -98,6 +153,68 @@ export default function LaporanPage() {
   const feedSummary = calculateFeedSummary(feedItems);
   const currentBranchObj = branches.find((b) => b.id === activeBranch);
 
+  const triggerDownload = (blob: Blob, fileName: string) => {
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    window.URL.revokeObjectURL(url);
+  };
+
+  const handleExportLphDirect = async () => {
+    try {
+      setExportingLph(true);
+      const allCages = getFarmCages('all');
+      const allBranches = getFarmBranches();
+      const allFeed = getFeedDistribution('all');
+      const allDailyProd = getAllDailyEggProductions();
+
+      const payload = {
+        date: selectedDate,
+        branch: activeBranch,
+        cages: allCages,
+        branches: allBranches,
+        feedItems: allFeed,
+        dailyProductions: allDailyProd,
+        supervisorName: currentUser?.name || 'Pengawas',
+      };
+
+      const res = await fetch('/api/export/lph', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      const branchNameClean =
+        activeBranch === 'all'
+          ? 'KESELURUHAN'
+          : (currentBranchObj?.shortName || currentBranchObj?.name || 'CABANG')
+              .toUpperCase()
+              .replace(/\s+/g, '_');
+      const downloadFileName = `REKAP_LPH_${branchNameClean}_${selectedDate}.xlsx`;
+
+      if (!res.ok) {
+        const getRes = await fetch(`/api/export/lph?date=${selectedDate}&branch=${activeBranch}`);
+        if (!getRes.ok) throw new Error('Gagal mengekspor file Excel LPH');
+        const blob = await getRes.blob();
+        triggerDownload(blob, downloadFileName);
+      } else {
+        const blob = await res.blob();
+        triggerDownload(blob, downloadFileName);
+      }
+
+      setToastMessage(`File Rekap LPH (${branchNameClean}) ${selectedDate} berhasil diunduh!`);
+      setTimeout(() => setToastMessage(null), 3500);
+    } catch (e: any) {
+      alert('Export LPH Gagal: ' + (e?.message || 'Error'));
+    } finally {
+      setExportingLph(false);
+    }
+  };
+
   const handleExportPakanDirect = async () => {
     try {
       setExportingPakan(true);
@@ -108,13 +225,8 @@ export default function LaporanPage() {
       const res = await fetch(`/api/export/pakan?branch=${branchQuery}&date=${selectedDate}`);
       if (!res.ok) throw new Error('Gagal export excel pakan');
       const blob = await res.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `PEMBAGIAN_PAKAN_${currentBranchObj?.shortName || 'FARM'}_${selectedDate}.xlsx`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
+      const fileName = `PEMBAGIAN_PAKAN_${currentBranchObj?.shortName || 'FARM'}_${selectedDate}.xlsx`;
+      triggerDownload(blob, fileName);
 
       setToastMessage('File Excel Pembagian Pakan berhasil diunduh!');
       setTimeout(() => setToastMessage(null), 3000);
@@ -160,12 +272,13 @@ export default function LaporanPage() {
 
           {reportType === 'lph' ? (
             <button
-              onClick={() => setShowExportModal(true)}
-              className="flex items-center gap-1 px-2.5 sm:px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-xs active:scale-95 transition-all"
-              title="Export File Excel LPH"
+              onClick={handleExportLphDirect}
+              disabled={exportingLph}
+              className="flex items-center gap-1 px-2.5 sm:px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-xs active:scale-95 disabled:opacity-50 transition-all"
+              title={`Unduh Rekap LPH ${currentBranchObj?.shortName || 'Semua Cabang'} (${selectedDate})`}
             >
               <FileSpreadsheet className="w-4 h-4" />
-              <span>Export LPH</span>
+              <span>{exportingLph ? 'Mengunduh...' : 'Export LPH'}</span>
             </button>
           ) : (
             <button
@@ -236,10 +349,7 @@ export default function LaporanPage() {
         activeBranch={activeBranch}
         onSelectBranch={handleSelectBranch}
         selectedDate={selectedDate}
-        onOpenExport={() => {
-          if (reportType === 'lph') setShowExportModal(true);
-          else handleExportPakanDirect();
-        }}
+        onOpenPeriodModal={() => setShowPeriodModal(true)}
         currentBranchName={currentUser?.role === 'PENGAWAS' ? currentUser.branchName : currentBranchObj?.name}
       />
 
@@ -326,13 +436,15 @@ export default function LaporanPage() {
 
             <button
               onClick={() => {
-                if (reportType === 'lph') setShowExportModal(true);
+                if (reportType === 'lph') handleExportLphDirect();
                 else handleExportPakanDirect();
               }}
-              className="flex items-center gap-1 text-xs font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg hover:bg-emerald-100 transition-colors"
+              disabled={exportingLph || exportingPakan}
+              className="flex items-center gap-1 text-xs font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg hover:bg-emerald-100 transition-colors disabled:opacity-50"
+              title="Langsung unduh Excel sesuai filter periode saat ini"
             >
               <Download className="w-3.5 h-3.5" />
-              <span>.XLSX</span>
+              <span>{exportingLph ? '...' : '.XLSX'}</span>
             </button>
           </div>
         </div>
@@ -350,6 +462,17 @@ export default function LaporanPage() {
           />
         )}
       </div>
+
+      {/* Periode & Cabang Filter Modal */}
+      <PeriodeFilterModal
+        isOpen={showPeriodModal}
+        onClose={() => setShowPeriodModal(false)}
+        selectedDate={selectedDate}
+        activeBranch={activeBranch}
+        branches={branches}
+        currentUser={currentUser}
+        onApply={handleApplyPeriod}
+      />
 
       {/* Modular Export Modal for LPH */}
       <LphExportModal
