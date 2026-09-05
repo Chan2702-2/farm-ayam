@@ -326,7 +326,7 @@ function populateRekapLphWorksheet(
   ws.mergeCells('B1:AE1');
   const b1 = ws.getCell('B1');
   b1.value = 'Laporan Harian Produksi Telor';
-  b1.font = { name: 'Arial', size: 12, bold: true, color: { argb: 'FF0F172A' } };
+  b1.font = { name: 'Arial', size: 13, bold: true, color: { argb: 'FF0F172A' } };
   b1.alignment = { horizontal: 'center', vertical: 'middle' };
   ws.getRow(1).height = 26;
 
@@ -334,33 +334,33 @@ function populateRekapLphWorksheet(
   ws.mergeCells('B2:AE2');
   const b2 = ws.getCell('B2');
   b2.value = 'Yuki Farm';
-  b2.font = { name: 'Arial', size: 10, bold: true, color: { argb: 'FF0F172A' } };
+  b2.font = { name: 'Arial', size: 13, bold: true, color: { argb: 'FF0F172A' } };
   b2.alignment = { horizontal: 'center', vertical: 'middle' };
   ws.getRow(2).height = 22;
 
   // Row 3: Kandang / Cabang
   const b3 = ws.getCell('B3');
   b3.value = 'Kandang';
-  b3.font = { name: 'Arial', size: 10, bold: true, color: { argb: 'FF1E293B' } };
+  b3.font = { name: 'Arial', size: 10, bold: true, color: { argb: 'FF0F172A' } };
   b3.alignment = { vertical: 'middle' };
 
   ws.mergeCells('C3:E3');
   const c3 = ws.getCell('C3');
   c3.value = branchTitle;
-  c3.font = { name: 'Arial', size: 10, bold: true, color: { argb: 'FF0369A1' } };
+  c3.font = { name: 'Arial', size: 10, bold: true, color: { argb: 'FF0F172A' } };
   c3.alignment = { vertical: 'middle' };
   ws.getRow(3).height = 22;
 
   // Row 4: Tanggal (Format: Nama Hari, Hari Bulan Tahun, e.g. Selasa, 1 September 2026)
   const b4 = ws.getCell('B4');
   b4.value = 'Tanggal';
-  b4.font = { name: 'Arial', size: 10, bold: true, color: { argb: 'FF1E293B' } };
+  b4.font = { name: 'Arial', size: 10, bold: true, color: { argb: 'FF0F172A' } };
   b4.alignment = { vertical: 'middle' };
 
   ws.mergeCells('C4:F4');
   const c4 = ws.getCell('C4');
   c4.value = formatIndonesianFullDate(dateStr);
-  c4.font = { name: 'Arial', size: 10, bold: true, color: { argb: 'FF047857' } };
+  c4.font = { name: 'Arial', size: 10, bold: true, color: { argb: 'FF0F172A' } };
   c4.alignment = { vertical: 'middle' };
   ws.getRow(4).height = 22;
 
