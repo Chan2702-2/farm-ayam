@@ -356,6 +356,7 @@ export default function LaporanPage() {
         isOpen={showExportModal}
         onClose={() => setShowExportModal(false)}
         branchName={currentBranchObj?.name || 'Semua Cabang'}
+        branchId={activeBranch}
         totalCages={cages.length}
         totalProduksi={summary.totalProduksi}
         initialDate={selectedDate}
