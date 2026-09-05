@@ -326,41 +326,41 @@ function populateRekapLphWorksheet(
   ws.mergeCells('B1:AE1');
   const b1 = ws.getCell('B1');
   b1.value = 'Laporan Harian Produksi Telor';
-  b1.font = { name: 'Arial', size: 16, bold: true, color: { argb: 'FF0F172A' } };
+  b1.font = { name: 'Arial', size: 12, bold: true, color: { argb: 'FF0F172A' } };
   b1.alignment = { horizontal: 'center', vertical: 'middle' };
-  ws.getRow(1).height = 28;
+  ws.getRow(1).height = 26;
 
   // Row 2: Subtitle (Merged B2:AE2)
   ws.mergeCells('B2:AE2');
   const b2 = ws.getCell('B2');
   b2.value = 'Yuki Farm';
-  b2.font = { name: 'Arial', size: 14, bold: true, color: { argb: 'FF0F172A' } };
+  b2.font = { name: 'Arial', size: 10, bold: true, color: { argb: 'FF0F172A' } };
   b2.alignment = { horizontal: 'center', vertical: 'middle' };
-  ws.getRow(2).height = 24;
+  ws.getRow(2).height = 22;
 
   // Row 3: Kandang / Cabang
   const b3 = ws.getCell('B3');
   b3.value = 'Kandang';
-  b3.font = { name: 'Arial', size: 14, bold: true, color: { argb: 'FF1E293B' } };
+  b3.font = { name: 'Arial', size: 10, bold: true, color: { argb: 'FF1E293B' } };
   b3.alignment = { vertical: 'middle' };
 
   ws.mergeCells('C3:E3');
   const c3 = ws.getCell('C3');
   c3.value = branchTitle;
-  c3.font = { name: 'Arial', size: 14, bold: true, color: { argb: 'FF0369A1' } };
+  c3.font = { name: 'Arial', size: 10, bold: true, color: { argb: 'FF0369A1' } };
   c3.alignment = { vertical: 'middle' };
   ws.getRow(3).height = 22;
 
-  // Row 4: Tanggal
+  // Row 4: Tanggal (Format: Nama Hari, Hari Bulan Tahun, e.g. Selasa, 1 September 2026)
   const b4 = ws.getCell('B4');
   b4.value = 'Tanggal';
-  b4.font = { name: 'Arial', size: 14, bold: true, color: { argb: 'FF1E293B' } };
+  b4.font = { name: 'Arial', size: 10, bold: true, color: { argb: 'FF1E293B' } };
   b4.alignment = { vertical: 'middle' };
 
   ws.mergeCells('C4:F4');
   const c4 = ws.getCell('C4');
-  c4.value = dateStr;
-  c4.font = { name: 'Arial', size: 14, bold: true, color: { argb: 'FF047857' } };
+  c4.value = formatIndonesianFullDate(dateStr);
+  c4.font = { name: 'Arial', size: 10, bold: true, color: { argb: 'FF047857' } };
   c4.alignment = { vertical: 'middle' };
   ws.getRow(4).height = 22;
 
@@ -431,7 +431,7 @@ function populateRekapLphWorksheet(
   for (let r = 5; r <= 6; r++) {
     for (let c = 2; c <= 30; c++) {
       const cell = ws.getRow(r).getCell(c);
-      cell.font = { name: 'Arial', size: 11, bold: true, color: { argb: 'FF0F172A' } };
+      cell.font = { name: 'Arial', size: 10, bold: true, color: { argb: 'FF0F172A' } };
       cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
       cell.border = thinBorder;
       cell.fill = {
@@ -650,17 +650,17 @@ function populateRekapLphWorksheet(
     ws.mergeCells(`B${r}:D${r}`);
     const bCell = ws.getCell(`B${r}`);
     bCell.value = item.label;
-    bCell.font = { name: 'Arial', size: 11, bold: true, color: { argb: 'FF1E293B' } };
+    bCell.font = { name: 'Arial', size: 10, bold: true, color: { argb: 'FF1E293B' } };
     bCell.alignment = { vertical: 'middle' };
 
     const eCell = ws.getCell(`E${r}`);
     eCell.value = ':';
-    eCell.font = { name: 'Arial', size: 11, bold: true, color: { argb: 'FF1E293B' } };
+    eCell.font = { name: 'Arial', size: 10, bold: true, color: { argb: 'FF1E293B' } };
     eCell.alignment = { horizontal: 'center', vertical: 'middle' };
 
     const fCell = ws.getCell(`F${r}`);
     fCell.value = { formula: item.formula, result: item.result };
-    fCell.font = { name: 'Arial', size: 11, bold: true, color: { argb: 'FF0F172A' } };
+    fCell.font = { name: 'Arial', size: 10, bold: true, color: { argb: 'FF0F172A' } };
     fCell.alignment = { horizontal: 'right', vertical: 'middle' };
     if (item.numFmt) fCell.numFmt = item.numFmt;
 
@@ -723,17 +723,17 @@ function populateRekapLphWorksheet(
     ws.mergeCells(`H${r}:K${r}`);
     const hCell = ws.getCell(`H${r}`);
     hCell.value = item.label;
-    hCell.font = { name: 'Arial', size: 11, color: { argb: 'FF1E293B' } };
+    hCell.font = { name: 'Arial', size: 10, color: { argb: 'FF1E293B' } };
     hCell.alignment = { vertical: 'middle' };
 
     const lCell = ws.getCell(`L${r}`);
     lCell.value = ':';
-    lCell.font = { name: 'Arial', size: 11, bold: true, color: { argb: 'FF1E293B' } };
+    lCell.font = { name: 'Arial', size: 10, bold: true, color: { argb: 'FF1E293B' } };
     lCell.alignment = { horizontal: 'center', vertical: 'middle' };
 
     const mCell = ws.getCell(`M${r}`);
     mCell.value = { formula: item.formula, result: item.result };
-    mCell.font = { name: 'Arial', size: 11, bold: true, color: { argb: 'FF0F172A' } };
+    mCell.font = { name: 'Arial', size: 10, bold: true, color: { argb: 'FF0F172A' } };
     mCell.alignment = { horizontal: 'right', vertical: 'middle' };
     mCell.numFmt = '#,##0';
   });
@@ -743,23 +743,24 @@ function populateRekapLphWorksheet(
   ws.mergeCells(`V${rPengawas}:AD${rPengawas}`);
   const pengawasHeader = ws.getCell(`V${rPengawas}`);
   pengawasHeader.value = 'Pengawas';
-  pengawasHeader.font = { name: 'Arial', size: 13, bold: true, color: { argb: 'FF0F172A' } };
+  pengawasHeader.font = { name: 'Arial', size: 10, bold: true, color: { argb: 'FF0F172A' } };
   pengawasHeader.alignment = { horizontal: 'center', vertical: 'middle' };
 
   // Signature area (blank space)
   ws.mergeCells(`V${rPengawas + 1}:AD${rPengawas + 5}`);
 
-  // Date cell under signature
+  // Date cell under signature (Format: Nama Hari, Hari Bulan Tahun)
   const rDate = rPengawas + 6;
   ws.mergeCells(`V${rDate}:AA${rDate}`);
   const dateCell = ws.getCell(`V${rDate}`);
-  dateCell.value = { formula: 'C4', result: dateStr };
-  dateCell.font = { name: 'Arial', size: 11, bold: true, color: { argb: 'FF1E293B' } };
+  dateCell.value = { formula: 'C4', result: formatIndonesianFullDate(dateStr) };
+  dateCell.font = { name: 'Arial', size: 10, bold: true, color: { argb: 'FF1E293B' } };
   dateCell.alignment = { horizontal: 'center', vertical: 'middle' };
 
+  // Beside date in TTD: Nama Kandang / Cabang (formula =C3)
   ws.mergeCells(`AB${rDate}:AD${rDate}`);
-  const supCell = ws.getCell(`AB${rDate}`);
-  supCell.value = `( ${supervisorName} )`;
-  supCell.font = { name: 'Arial', size: 11, bold: true, color: { argb: 'FF1E293B' } };
-  supCell.alignment = { horizontal: 'center', vertical: 'middle' };
+  const branchCell = ws.getCell(`AB${rDate}`);
+  branchCell.value = { formula: 'C3', result: branchTitle };
+  branchCell.font = { name: 'Arial', size: 10, bold: true, color: { argb: 'FF1E293B' } };
+  branchCell.alignment = { horizontal: 'center', vertical: 'middle' };
 }
