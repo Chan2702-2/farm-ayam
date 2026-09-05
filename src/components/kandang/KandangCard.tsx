@@ -63,7 +63,9 @@ export function KandangCard({ cage, onEdit }: KandangCardProps) {
       <div className="flex items-start justify-between gap-2 mb-2.5">
         <div className="flex items-center gap-2.5 min-w-0">
           <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-[#e0f2fe] text-[#0369a1] font-bold flex items-center justify-center text-xs sm:text-sm shrink-0">
-            {cage.name.startsWith('1.') ? 'K1' : cage.name.substring(0, 3).toUpperCase()}
+            {cage.name.includes(' - ')
+              ? (cage.name.split(' - ')[1]?.trim().toUpperCase() || 'KD')
+              : cage.name.replace(/^\d+\.\s*/, '').substring(0, 3).toUpperCase()}
           </div>
           <div className="min-w-0">
             <div className="flex items-center gap-1.5 flex-wrap">

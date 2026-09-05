@@ -56,8 +56,17 @@ export function EditKandangModal({
   useEffect(() => {
     if (cage) {
       setBranchId(cage.branchId || branches[0]?.id || '');
-      setNama(cage.name || '');
-      setTipe(cage.tipe === 'KAYU' ? 'KAYU' : 'KAWAT');
+      const rawTipe = cage.tipe === 'KAYU' ? 'KAYU' : 'KAWAT';
+      setTipe(rawTipe);
+
+      // Extract penomoran murni (misal "KAWAT - 01" atau "1. KAWAT - 01" -> "01")
+      let rawNomor = (cage.name || '').replace(/^\d+\.\s*/, '').trim();
+      const prefixRegex = new RegExp(`^${rawTipe}\\s*-\\s*`, 'i');
+      if (prefixRegex.test(rawNomor)) {
+        rawNomor = rawNomor.replace(prefixRegex, '').trim();
+      }
+      setNama(rawNomor);
+
       setOperator(cage.operator || '');
       setPhone(cage.phone || '');
       setKapasitas(String(cage.kapasitas || 4000));
@@ -94,7 +103,7 @@ export function EditKandangModal({
     if (!cage) return;
 
     if (!nama.trim() || !operator.trim()) {
-      alert('Silakan lengkapi nama unit kandang dan nama operator.');
+      alert('Silakan lengkapi penomoran kandang dan nama operator.');
       return;
     }
 
@@ -106,12 +115,16 @@ export function EditKandangModal({
       const popHidup = Number(populasiHidup) >= 0 ? Number(populasiHidup) : popAwal;
       const curUmurMgg = Number(umurMgg) || 18;
 
+      // Output: Tipe Kandang - Penomoran (e.g. KAWAT - 01)
+      const rawNomor = nama.trim().replace(new RegExp(`^${tipe}\\s*-\\s*`, 'i'), '');
+      const formattedCageName = `${tipe} - ${rawNomor}`;
+
       const updatedCage: FarmCageData = {
         ...cage,
         branchId: branchObj.id,
         branchName: branchObj.name,
-        name: nama.trim(),
-        fullName: `${nama.trim()} (${operator.trim().toUpperCase()})`,
+        name: formattedCageName,
+        fullName: `${formattedCageName} (${operator.trim().toUpperCase()})`,
         operator: operator.trim().toUpperCase(),
         phone: phone.trim() || undefined,
         kapasitas: kap,
@@ -259,18 +272,28 @@ export function EditKandangModal({
 
           <div>
             <label className="block text-xs font-semibold text-slate-600 mb-1">
-              Nama / Penomoran <span className="text-red-500">*</span>
+              Penomoran <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
               required
-              placeholder="Nama / Penomoran"
+              placeholder="Penomoran"
               value={nama}
               onChange={(e) => setNama(e.target.value)}
               className="w-full h-11 px-3 rounded-xl border border-slate-200 bg-slate-50 text-sm font-semibold text-slate-800 outline-none focus:bg-white focus:border-[#0284c7]"
             />
           </div>
         </div>
+
+        {/* Live Preview Output Nama Kandang: Tipe Kandang - Penomoran */}
+        {nama.trim() && (
+          <div className="px-3 py-2 rounded-xl bg-sky-50/80 border border-sky-200/60 flex items-center justify-between text-xs">
+            <span className="text-slate-500 font-medium">Output Nama Kandang:</span>
+            <span className="font-bold text-[#0284c7] font-mono text-xs">
+              {tipe} - {nama.trim().replace(new RegExp(`^${tipe}\\s*-\\s*`, 'i'), '')}
+            </span>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>

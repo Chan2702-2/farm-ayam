@@ -185,8 +185,8 @@ export default function KandangPage() {
       return;
     }
 
-    if (!newNama || !newOperator) {
-      alert('Silakan lengkapi nama kandang dan nama operator.');
+    if (!newNama.trim() || !newOperator.trim()) {
+      alert('Silakan lengkapi penomoran kandang dan nama operator.');
       return;
     }
 
@@ -198,13 +198,17 @@ export default function KandangPage() {
     const kap = Number(newKapasitas) || 4000;
     const popAwal = Number(newPopulasiAwal) || kap;
 
+    // Output: Tipe Kandang - Penomoran (Contoh: KAWAT - 01)
+    const rawNomor = newNama.trim().replace(new RegExp(`^${newTipe}\\s*-\\s*`, 'i'), '');
+    const formattedCageName = `${newTipe} - ${rawNomor}`;
+
     const newCage: FarmCageData = {
       id: `cage-${Date.now()}`,
       index: nextIndex,
       branchId: branchObj.id,
       branchName: branchObj.name,
-      fullName: `${nextIndex}. ${newNama} (${newOperator.toUpperCase()})`,
-      name: `${nextIndex}. ${newNama}`,
+      fullName: `${formattedCageName} (${newOperator.toUpperCase()})`,
+      name: formattedCageName,
       operator: newOperator.toUpperCase(),
       phone: newPhone.trim() || undefined,
       kapasitas: kap,
@@ -728,18 +732,28 @@ export default function KandangPage() {
 
             <div>
               <label className="block text-xs font-semibold text-slate-600 mb-1">
-                Nama / Penomoran <span className="text-red-500">*</span>
+                Penomoran <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
                 required
-                placeholder="Nama / Penomoran"
+                placeholder="Penomoran"
                 value={newNama}
                 onChange={(e) => setNewNama(e.target.value)}
                 className="w-full h-11 px-3 rounded-xl border border-slate-200 bg-slate-50 text-sm font-semibold text-slate-800 outline-none focus:bg-white focus:border-[#0284c7]"
               />
             </div>
           </div>
+
+          {/* Live Preview Output Nama Kandang: Tipe Kandang - Penomoran */}
+          {newNama.trim() && (
+            <div className="px-3 py-2 rounded-xl bg-sky-50/80 border border-sky-200/60 flex items-center justify-between text-xs">
+              <span className="text-slate-500 font-medium">Output Nama Kandang:</span>
+              <span className="font-bold text-[#0284c7] font-mono text-xs">
+                {newTipe} - {newNama.trim().replace(new RegExp(`^${newTipe}\\s*-\\s*`, 'i'), '')}
+              </span>
+            </div>
+          )}
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
