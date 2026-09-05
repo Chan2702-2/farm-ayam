@@ -18,7 +18,7 @@ const QUEUE_KEY = 'yuki_pending_queue';
 
 export interface PendingSyncAction {
   id: string;
-  type: 'produksi' | 'pakan' | 'populasi' | 'master';
+  type: 'produksi' | 'pakan' | 'populasi' | 'berat' | 'perlakuan' | 'master';
   url: string;
   payload: any;
   timestamp: number;

@@ -11,7 +11,8 @@ import {
   AlertTriangle,
   Camera,
   X,
-  Check
+  Check,
+  Calendar
 } from 'lucide-react';
 import { getFarmCages, saveFarmCages, getCageById, FarmCageData } from '@/lib/data/farm-data';
 import { Modal } from '@/components/ui/Modal';
@@ -27,6 +28,9 @@ export default function CatatKematianPage() {
   const [showCageModal, setShowCageModal] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showToast, setShowToast] = useState(false);
+
+  // Dynamic Date
+  const [tanggal, setTanggal] = useState(() => new Date().toISOString().split('T')[0]);
 
   const [mati, setMati] = useState(0);
   const [penyebab, setPenyebab] = useState('Penyebab Normal / Alami');
@@ -91,12 +95,12 @@ export default function CatatKematianPage() {
       branchId: selectedCage.branchId,
       branchName: selectedCage.branchName,
       actionType: 'MORTALITAS',
-      title: `Catat Kematian ${selectedCage.name}`,
+      title: `Catat Kematian ${selectedCage.name} (${tanggal})`,
       description: `Mencatat ${mati} ekor mati (${penyebab}). Sisa populasi: ${sisaAyam.toLocaleString('id-ID')} ekor.`,
     });
 
     const popRow = {
-      tanggal: new Date().toISOString().split('T')[0],
+      tanggal: tanggal || new Date().toISOString().split('T')[0],
       branchId: selectedCage.branchId,
       branchName: selectedCage.branchName,
       cageId: selectedCage.id,
@@ -147,17 +151,25 @@ export default function CatatKematianPage() {
 
   return (
     <div className="pt-16 sm:pt-20 pb-28 px-3.5 sm:px-4 space-y-3.5 sm:space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-2">
         <div>
           <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
             Pencatatan Mortalitas
           </span>
-          <h1 className="font-jakarta font-bold text-xl text-slate-900">
+          <h1 className="font-jakarta font-bold text-lg sm:text-xl text-slate-900">
             Catat Kematian & Afkir
           </h1>
         </div>
-        <div className="px-3 py-1 rounded-full bg-red-50 text-red-700 text-xs font-bold">
-          Audit Shift
+
+        {/* Dynamic Date Picker Pill */}
+        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-red-50 text-red-700 text-xs font-semibold border border-red-200 shadow-2xs">
+          <Calendar className="w-3.5 h-3.5 text-red-600 shrink-0" />
+          <input
+            type="date"
+            value={tanggal}
+            onChange={(e) => setTanggal(e.target.value)}
+            className="bg-transparent text-xs font-bold text-red-700 focus:outline-none cursor-pointer"
+          />
         </div>
       </div>
 

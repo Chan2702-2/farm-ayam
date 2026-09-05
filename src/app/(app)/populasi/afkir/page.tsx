@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Archive, Save, CheckCircle2, ChevronDown, Check } from 'lucide-react';
+import { Archive, Save, CheckCircle2, ChevronDown, Check, Calendar } from 'lucide-react';
 import { getFarmCages, saveFarmCages, FarmCageData } from '@/lib/data/farm-data';
 import { Modal } from '@/components/ui/Modal';
 import { getCurrentUser } from '@/lib/data/auth-users';
@@ -15,6 +15,9 @@ export default function PopulasiAfkirPage() {
   const [selectedCage, setSelectedCage] = useState<FarmCageData | null>(null);
   const [showCageModal, setShowCageModal] = useState(false);
   const [showToast, setShowToast] = useState(false);
+
+  // Dynamic Date
+  const [tanggal, setTanggal] = useState(() => new Date().toISOString().split('T')[0]);
 
   const [jumlahAfkir, setJumlahAfkir] = useState(0);
   const [alasan, setAlasan] = useState('Kerdil / Stunting');
@@ -62,12 +65,12 @@ export default function PopulasiAfkirPage() {
       branchId: selectedCage.branchId,
       branchName: selectedCage.branchName,
       actionType: 'MORTALITAS',
-      title: `Catat Afkir ${selectedCage.name}`,
+      title: `Catat Afkir ${selectedCage.name} (${tanggal})`,
       description: `Mencatat culling/afkir ${jumlahAfkir} ekor (${alasan}). Sisa populasi: ${populasiAkhir.toLocaleString('id-ID')} ekor.`,
     });
 
     const popRow = {
-      tanggal: new Date().toISOString().split('T')[0],
+      tanggal: tanggal || new Date().toISOString().split('T')[0],
       branchId: selectedCage.branchId,
       branchName: selectedCage.branchName,
       cageId: selectedCage.id,
@@ -116,16 +119,29 @@ export default function PopulasiAfkirPage() {
 
   return (
     <div className="pt-16 sm:pt-20 pb-28 px-3.5 sm:px-4 space-y-3.5 sm:space-y-4">
-      <div>
-        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
-          Manajemen Populasi
-        </span>
-        <h1 className="font-jakarta font-bold text-xl text-slate-900">
-          Catat Pengafkiran (Culling)
-        </h1>
-        <p className="text-xs text-slate-500 mt-0.5 font-medium">
-          Pemisahan unggas non-produktif / rusak dari populasi aktif
-        </p>
+      <div className="flex items-center justify-between gap-2">
+        <div>
+          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+            Manajemen Populasi
+          </span>
+          <h1 className="font-jakarta font-bold text-lg sm:text-xl text-slate-900">
+            Catat Pengafkiran (Culling)
+          </h1>
+          <p className="text-xs text-slate-500 mt-0.5 font-medium">
+            Pemisahan unggas non-produktif / rusak dari populasi aktif
+          </p>
+        </div>
+
+        {/* Dynamic Date Picker Pill */}
+        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-50 text-amber-900 text-xs font-semibold border border-amber-200 shadow-2xs shrink-0">
+          <Calendar className="w-3.5 h-3.5 text-amber-700 shrink-0" />
+          <input
+            type="date"
+            value={tanggal}
+            onChange={(e) => setTanggal(e.target.value)}
+            className="bg-transparent text-xs font-bold text-amber-900 focus:outline-none cursor-pointer"
+          />
+        </div>
       </div>
 
       <div

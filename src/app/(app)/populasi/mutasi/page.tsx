@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeftRight, Save, CheckCircle2 } from 'lucide-react';
+import { ArrowLeftRight, Save, CheckCircle2, Calendar } from 'lucide-react';
 import { getFarmCages, saveFarmCages, FarmCageData } from '@/lib/data/farm-data';
 import { getCurrentUser } from '@/lib/data/auth-users';
 import { addActivityLog } from '@/lib/data/activity-log';
@@ -17,6 +17,9 @@ export default function PopulasiMutasiPage() {
   const [tipeMutasi, setTipeMutasi] = useState<'PINDAH_KANDANG' | 'MASUK_PULLET'>('PINDAH_KANDANG');
   const [catatan, setCatatan] = useState('');
   const [showToast, setShowToast] = useState(false);
+
+  // Dynamic Date
+  const [tanggal, setTanggal] = useState(() => new Date().toISOString().split('T')[0]);
 
   useEffect(() => {
     const list = getFarmCages();
@@ -68,12 +71,12 @@ export default function PopulasiMutasiPage() {
       branchId: kandangAsal.branchId,
       branchName: kandangAsal.branchName,
       actionType: 'MUTASI',
-      title: `Mutasi Ayam ${kandangAsal.name} (${jumlah} ekor)`,
+      title: `Mutasi Ayam ${kandangAsal.name} (${jumlah} ekor) (${tanggal})`,
       description: `${tipeMutasi === 'PINDAH_KANDANG' ? `Pindah ke ${kandangTujuan?.name}` : 'Masuk Pullet'}. Catatan: ${catatan || '-'}`,
     });
 
     const popRow = {
-      tanggal: new Date().toISOString().split('T')[0],
+      tanggal: tanggal || new Date().toISOString().split('T')[0],
       branchId: kandangAsal.branchId,
       branchName: kandangAsal.branchName,
       cageId: kandangAsal.id,
@@ -122,16 +125,29 @@ export default function PopulasiMutasiPage() {
 
   return (
     <div className="pt-16 sm:pt-20 pb-28 px-3.5 sm:px-4 space-y-3.5 sm:space-y-4">
-      <div>
-        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
-          Relokasi & Mutasi
-        </span>
-        <h1 className="font-jakarta font-bold text-xl text-slate-900">
-          Mutasi Populasi Ayam
-        </h1>
-        <p className="text-xs text-slate-500 mt-0.5 font-medium">
-          Perpindahan unggas antar unit kandang atau penerimaan pullet baru
-        </p>
+      <div className="flex items-center justify-between gap-2">
+        <div>
+          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+            Relokasi & Mutasi
+          </span>
+          <h1 className="font-jakarta font-bold text-lg sm:text-xl text-slate-900">
+            Mutasi Populasi Ayam
+          </h1>
+          <p className="text-xs text-slate-500 mt-0.5 font-medium">
+            Perpindahan unggas antar unit kandang atau penerimaan pullet baru
+          </p>
+        </div>
+
+        {/* Dynamic Date Picker Pill */}
+        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-sky-50 text-[#0369a1] text-xs font-semibold border border-sky-200 shadow-2xs shrink-0">
+          <Calendar className="w-3.5 h-3.5 text-[#0284c7] shrink-0" />
+          <input
+            type="date"
+            value={tanggal}
+            onChange={(e) => setTanggal(e.target.value)}
+            className="bg-transparent text-xs font-bold text-[#0369a1] focus:outline-none cursor-pointer"
+          />
+        </div>
       </div>
 
       <form onSubmit={handleSave} className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 space-y-3.5">

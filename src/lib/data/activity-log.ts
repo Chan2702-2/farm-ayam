@@ -6,6 +6,8 @@ export type LogActionType =
   | 'PAKAN'
   | 'MORTALITAS'
   | 'MUTASI'
+  | 'TIMBANG_BERAT'
+  | 'MEDIKASI_VAKSIN'
   | 'IMPORT_EXCEL'
   | 'EXPORT_EXCEL'
   | 'LOGIN';

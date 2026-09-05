@@ -183,15 +183,102 @@ export async function GET(req: NextRequest) {
       console.warn('Gagal membaca data produksi telur:', prodErr);
     }
 
-    // 4. Ambil data Distribusi Pakan
+    // 4. Ambil data Mortalitas & Populasi terbaru
+    try {
+      const popRaw = await readSheetValues('Mortalitas & Populasi', 'A2:K3000');
+      if (Array.isArray(popRaw) && popRaw.length > 0) {
+        const reversedPop = [...popRaw].reverse();
+        const seenPopCages = new Set<string>();
+
+        for (const r of reversedPop) {
+          const cageId = r[4];
+          const cageName = r[5];
+          const matchCage = cages.find((c) => c.id === cageId || c.name === cageName);
+
+          if (matchCage && !seenPopCages.has(matchCage.id)) {
+            seenPopCages.add(matchCage.id);
+            const popAkhir = Number(r[8]);
+            if (popAkhir > 0) {
+              matchCage.populasiHidup = popAkhir;
+            }
+          }
+        }
+
+        // Akumulasi total mati dan afkir dari seluruh baris
+        for (const r of popRaw) {
+          const cageId = r[4];
+          const cageName = r[5];
+          const matchCage = cages.find((c) => c.id === cageId || c.name === cageName);
+          if (matchCage) {
+            const tipe = r[6];
+            const jml = Number(r[7]) || 0;
+            if (tipe === 'KEMATIAN') matchCage.mati += jml;
+            else if (tipe === 'AFKIR') matchCage.afkir += jml;
+          }
+        }
+      }
+    } catch (popErr) {
+      console.warn('Gagal membaca data mortalitas:', popErr);
+    }
+
+    // 5. Ambil data Penimbangan Bobot terbaru
+    try {
+      const beratRaw = await readSheetValues('Penimbangan Bobot', 'A2:O2000');
+      if (Array.isArray(beratRaw) && beratRaw.length > 0) {
+        const reversedBerat = [...beratRaw].reverse();
+        const seenBeratCages = new Set<string>();
+
+        for (const r of reversedBerat) {
+          const cageId = r[4];
+          const cageName = r[5];
+          const matchCage = cages.find((c) => c.id === cageId || c.name === cageName);
+
+          if (matchCage && !seenBeratCages.has(matchCage.id)) {
+            seenBeratCages.add(matchCage.id);
+            const avgGram = Number(r[9]) || 0;
+            if (avgGram > 0) {
+              matchCage.beratAktual = avgGram;
+            }
+          }
+        }
+      }
+    } catch (beratErr) {
+      console.warn('Gagal membaca data penimbangan bobot:', beratErr);
+    }
+
+    // 6. Ambil data Medikasi & Vaksin terbaru
+    try {
+      const medikasiRaw = await readSheetValues('Medikasi & Vaksin', 'A2:M2000');
+      if (Array.isArray(medikasiRaw) && medikasiRaw.length > 0) {
+        const reversedMed = [...medikasiRaw].reverse();
+        const seenMedCages = new Set<string>();
+
+        for (const r of reversedMed) {
+          const cageId = r[4];
+          const cageName = r[5];
+          const matchCage = cages.find((c) => c.id === cageId || c.name === cageName);
+
+          if (matchCage && !seenMedCages.has(matchCage.id)) {
+            seenMedCages.add(matchCage.id);
+            if (r[7]) {
+              matchCage.obat = r[7];
+            }
+          }
+        }
+      }
+    } catch (medErr) {
+      console.warn('Gagal membaca data medikasi/vaksin:', medErr);
+    }
+
+    // 7. Ambil data Distribusi Pakan & Ceklis Pakan
     const feedItems: FeedDistributionItem[] = [];
     try {
-      const pakanRaw = await readSheetValues('Distribusi Pakan', 'A2:M2000');
+      const pakanRaw = await readSheetValues('Distribusi Pakan', 'A2:P2000');
       if (Array.isArray(pakanRaw)) {
         for (const r of pakanRaw) {
           if (!r[1] || !r[5]) continue;
           feedItems.push({
-            id: `feed-${r[4] || 'cage'}-${Date.now()}`,
+            id: `feed-${r[4] || 'cage'}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
             tanggal: r[1],
             branchId: r[2] || 'branch-1',
             branchName: r[3] || 'Cabang',
@@ -203,11 +290,13 @@ export async function GET(req: NextRequest) {
             jumlahPakanKg: Number(r[8]) || 0,
             kirimKg: Number(r[9]) || 0,
             kirimSak: Number(r[10]) || 0,
+            sisaKg: Number(r[11]) || 0,
+            konsumsiGr: Number(r[12]) || 0,
+            konsumsiGrPerEkor: Number(r[12]) || 0,
             penambahanKg: 0,
-            konsumsiGr: Number(r[11]) || 0,
-            konsumsiGrPerEkor: Number(r[11]) || 0,
+            ceklisStatus: (r[13] as any) || 'SUDAH',
+            catatan: r[14] || '',
             umur: 30,
-            sisaKg: 0,
           });
         }
       }

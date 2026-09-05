@@ -74,6 +74,8 @@ export interface FeedDistributionItem {
   kirimSak: number;
   penambahanKg: number;
   tanggal: string;
+  ceklisStatus?: 'SUDAH' | 'BELUM' | string;
+  catatan?: string;
 }
 
 // Mulai dari KOSONG (0 data dummy)

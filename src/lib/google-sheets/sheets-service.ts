@@ -35,7 +35,42 @@ export interface PakanSheetRow {
   jumlahPakanKg: number;
   kirimKg: number;
   kirimSak: number;
+  sisaKg?: number;
   konsumsiGrPerEkor: number;
+  statusCeklis?: string;
+  catatan?: string;
+  userName: string;
+}
+
+export interface BeratSheetRow {
+  tanggal: string;
+  branchId: string;
+  branchName: string;
+  cageId: string;
+  cageName: string;
+  umurMgg: number;
+  sampelEkor: number;
+  totalBeratKg: number;
+  avgGram: number;
+  stdGram: number;
+  selisih: number;
+  keseragaman?: number;
+  catatan?: string;
+  userName: string;
+}
+
+export interface PerlakuanSheetRow {
+  tanggal: string;
+  branchId: string;
+  branchName: string;
+  cageId: string;
+  cageName: string;
+  kategori: 'OBAT' | 'VITAMIN' | 'VAKSIN';
+  namaObat: string;
+  dosis: string;
+  aplikasi: string;
+  waktu: string;
+  catatan?: string;
   userName: string;
 }
 
@@ -139,9 +174,46 @@ const PAKAN_HEADERS = [
   'Populasi',
   'Jenis Pakan',
   'Jumlah Pakan (Kg)',
-  'Kirim (Kg)',
-  'Kirim (Sak)',
+  'Pakan Masuk (Kg)',
+  'Pakan Masuk (Sak)',
+  'Pakan Sisa (Kg)',
   'Konsumsi (gr/ekor)',
+  'Status Ceklis',
+  'Catatan',
+  'Petugas Pengawas'
+];
+
+export const BERAT_HEADERS = [
+  'Timestamp',
+  'Tanggal',
+  'ID Cabang',
+  'Nama Cabang',
+  'ID Kandang',
+  'Nama Kandang',
+  'Umur (Minggu)',
+  'Jumlah Sampel (Ekor)',
+  'Total Berat (Kg)',
+  'Rata-rata Bobot (Gram)',
+  'Standar Bobot (Gram)',
+  'Deviasi (Gram)',
+  'Keseragaman (%)',
+  'Catatan',
+  'Petugas Pengawas'
+];
+
+export const PERLAKUAN_HEADERS = [
+  'Timestamp',
+  'Tanggal',
+  'ID Cabang',
+  'Nama Cabang',
+  'ID Kandang',
+  'Nama Kandang',
+  'Kategori',
+  'Nama Obat / Vaksin',
+  'Dosis',
+  'Metode Aplikasi',
+  'Waktu Pemberian',
+  'Catatan',
   'Petugas Pengawas'
 ];
 
@@ -358,7 +430,84 @@ export async function appendPakanRows(rows: PakanSheetRow[]) {
     r.jumlahPakanKg,
     r.kirimKg,
     r.kirimSak,
+    r.sisaKg ?? 0,
     r.konsumsiGrPerEkor,
+    r.statusCeklis || 'Terverifikasi',
+    r.catatan || '-',
+    r.userName,
+  ]);
+
+  return sheets.spreadsheets.values.append({
+    spreadsheetId,
+    range: `'${sheetTitle}'!A:P`,
+    valueInputOption: 'USER_ENTERED',
+    insertDataOption: 'INSERT_ROWS',
+    requestBody: {
+      values,
+    },
+  });
+}
+
+export async function appendBeratRows(rows: BeratSheetRow[]) {
+  if (rows.length === 0) return;
+  const sheetTitle = 'Penimbangan Bobot';
+  await ensureSheetExists(sheetTitle, BERAT_HEADERS);
+
+  const sheets = getGoogleSheetsClient();
+  const spreadsheetId = getGoogleSheetId();
+  const nowStr = new Date().toISOString();
+
+  const values = rows.map((r) => [
+    nowStr,
+    r.tanggal,
+    r.branchId,
+    r.branchName,
+    r.cageId,
+    r.cageName,
+    r.umurMgg,
+    r.sampelEkor,
+    r.totalBeratKg,
+    r.avgGram,
+    r.stdGram,
+    r.selisih,
+    r.keseragaman ?? 0,
+    r.catatan || '-',
+    r.userName,
+  ]);
+
+  return sheets.spreadsheets.values.append({
+    spreadsheetId,
+    range: `'${sheetTitle}'!A:O`,
+    valueInputOption: 'USER_ENTERED',
+    insertDataOption: 'INSERT_ROWS',
+    requestBody: {
+      values,
+    },
+  });
+}
+
+export async function appendPerlakuanRows(rows: PerlakuanSheetRow[]) {
+  if (rows.length === 0) return;
+  const sheetTitle = 'Medikasi & Vaksin';
+  await ensureSheetExists(sheetTitle, PERLAKUAN_HEADERS);
+
+  const sheets = getGoogleSheetsClient();
+  const spreadsheetId = getGoogleSheetId();
+  const nowStr = new Date().toISOString();
+
+  const values = rows.map((r) => [
+    nowStr,
+    r.tanggal,
+    r.branchId,
+    r.branchName,
+    r.cageId,
+    r.cageName,
+    r.kategori,
+    r.namaObat,
+    r.dosis,
+    r.aplikasi,
+    r.waktu,
+    r.catatan || '-',
     r.userName,
   ]);
 

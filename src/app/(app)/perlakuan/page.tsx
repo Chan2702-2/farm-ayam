@@ -2,9 +2,12 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Syringe, Save, CheckCircle2, ChevronDown, Check, Pill, Sparkles } from 'lucide-react';
+import { Syringe, Save, CheckCircle2, ChevronDown, Check, Pill, Sparkles, Calendar } from 'lucide-react';
 import { getFarmCages, saveFarmCages, FarmCageData } from '@/lib/data/farm-data';
 import { Modal } from '@/components/ui/Modal';
+import { getCurrentUser } from '@/lib/data/auth-users';
+import { addActivityLog } from '@/lib/data/activity-log';
+import { markDataDirty, performAutoSync, isSyncNeeded, enqueuePendingSync } from '@/lib/sync/auto-sync';
 
 export default function PerlakuanPage() {
   const router = useRouter();
@@ -13,8 +16,11 @@ export default function PerlakuanPage() {
   const [showCageModal, setShowCageModal] = useState(false);
   const [showToast, setShowToast] = useState(false);
 
+  // Dynamic Date
+  const [tanggal, setTanggal] = useState(() => new Date().toISOString().split('T')[0]);
+
   const [kategori, setKategori] = useState<'OBAT' | 'VITAMIN' | 'VAKSIN'>('OBAT');
-  const [namaObat, setNamaObat] = useState('');
+  const [namaObat, setNamaObat] = useState('OTRALEC');
   const [dosis, setDosis] = useState('');
   const [aplikasi, setAplikasi] = useState('Air Minum');
   const [waktu, setWaktu] = useState('Pagi (07:00)');
@@ -24,6 +30,15 @@ export default function PerlakuanPage() {
     const list = getFarmCages();
     setCages(list);
     if (list.length > 0) setSelectedCage(list[0]);
+
+    const user = getCurrentUser();
+    if (user?.name) setPetugas(user.name);
+
+    return () => {
+      if (typeof window !== 'undefined' && navigator.onLine && isSyncNeeded()) {
+        performAutoSync();
+      }
+    };
   }, []);
 
   const handleSave = (e: React.FormEvent) => {
@@ -42,6 +57,61 @@ export default function PerlakuanPage() {
 
     setCages(updated);
     saveFarmCages(updated);
+
+    const user = getCurrentUser();
+    const operatorName = petugas || user?.name || 'Pengawas Lapangan';
+
+    addActivityLog({
+      userName: operatorName,
+      userRole: user?.role || 'PENGAWAS',
+      branchId: selectedCage.branchId || 'branch-1',
+      branchName: selectedCage.branchName || 'Cabang',
+      actionType: 'MEDIKASI_VAKSIN',
+      title: `Catat ${kategori} ${selectedCage.name} (${tanggal})`,
+      description: `Pemberian ${namaObat} (${dosis}, ${aplikasi}, ${waktu}). Pelaksana: ${operatorName}.`,
+    });
+
+    const perlakuanRow = {
+      tanggal: tanggal || new Date().toISOString().split('T')[0],
+      branchId: selectedCage.branchId || 'branch-1',
+      branchName: selectedCage.branchName || 'Cabang',
+      cageId: selectedCage.id,
+      cageName: selectedCage.name,
+      kategori,
+      namaObat,
+      dosis,
+      aplikasi,
+      waktu,
+      catatan: `Aplikasi: ${aplikasi}, Waktu: ${waktu}`,
+      userName: operatorName,
+    };
+
+    markDataDirty();
+
+    if (!navigator.onLine) {
+      enqueuePendingSync({
+        type: 'perlakuan',
+        url: '/api/sheets/sync-perlakuan',
+        payload: { row: perlakuanRow },
+      });
+      console.log('[Offline] Data medikasi disimpan di antrean HP.');
+    } else {
+      fetch('/api/sheets/sync-perlakuan', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ row: perlakuanRow }),
+      })
+        .then(() => performAutoSync())
+        .catch((err) => {
+          console.warn('Background sync perlakuan gagal, diantrekan:', err);
+          enqueuePendingSync({
+            type: 'perlakuan',
+            url: '/api/sheets/sync-perlakuan',
+            payload: { row: perlakuanRow },
+          });
+        });
+    }
+
     setShowToast(true);
 
     setTimeout(() => {
@@ -52,16 +122,29 @@ export default function PerlakuanPage() {
 
   return (
     <div className="pt-16 sm:pt-20 pb-28 px-3.5 sm:px-4 space-y-3.5 sm:space-y-4">
-      <div>
-        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
-          Medikasi & Biosecurity
-        </span>
-        <h1 className="font-jakarta font-bold text-xl text-slate-900">
-          Catat Perlakuan / Obat
-        </h1>
-        <p className="text-xs text-slate-500 mt-0.5 font-medium">
-          Pemberian obat terapeutik, vitamin, atau vaksinasi kandang
-        </p>
+      <div className="flex items-center justify-between gap-2">
+        <div>
+          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+            Medikasi & Biosecurity
+          </span>
+          <h1 className="font-jakarta font-bold text-lg sm:text-xl text-slate-900">
+            Catat Perlakuan / Obat
+          </h1>
+          <p className="text-xs text-slate-500 mt-0.5 font-medium">
+            Pemberian obat terapeutik, vitamin, atau vaksinasi kandang
+          </p>
+        </div>
+
+        {/* Dynamic Date Picker Pill */}
+        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-800 text-xs font-semibold border border-emerald-200 shadow-2xs shrink-0">
+          <Calendar className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+          <input
+            type="date"
+            value={tanggal}
+            onChange={(e) => setTanggal(e.target.value)}
+            className="bg-transparent text-xs font-bold text-emerald-800 focus:outline-none cursor-pointer"
+          />
+        </div>
       </div>
 
       {/* Cage Selector */}
@@ -137,7 +220,7 @@ export default function PerlakuanPage() {
               required
               value={dosis}
               onChange={(e) => setDosis(e.target.value)}
-              placeholder="Contoh: 0.5 ml / L"
+              placeholder="0.5 ml / L"
               className="w-full h-11 px-3.5 rounded-xl border border-slate-200 bg-slate-50 text-xs font-bold text-slate-900 outline-none"
             />
           </div>

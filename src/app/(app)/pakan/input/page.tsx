@@ -261,7 +261,10 @@ export default function InputPakanPage() {
         jumlahPakanKg,
         kirimKg,
         kirimSak,
+        sisaKg: sisaKg || 0,
         konsumsiGrPerEkor: konsumsiGr,
+        statusCeklis: 'Terverifikasi',
+        catatan: `Sisa: ${sisaKg || 0} kg, Masuk: ${kirimSak} sak`,
         userName: currentUser?.name || 'Pengawas Lapangan',
       };
 
@@ -366,7 +369,10 @@ export default function InputPakanPage() {
           jumlahPakanKg: item.jumlahPakanKg,
           kirimKg: item.kirimKg,
           kirimSak: item.kirimSak,
+          sisaKg: item.sisaKg || 0,
           konsumsiGrPerEkor: item.konsumsiGr,
+          statusCeklis: 'Terverifikasi',
+          catatan: `Sisa: ${item.sisaKg || 0} kg, Masuk: ${item.kirimSak || 0} sak`,
           userName: currentUser?.name || 'Pengawas Lapangan',
         })),
       };

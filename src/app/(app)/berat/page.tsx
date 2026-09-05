@@ -2,9 +2,12 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Scale, Save, CheckCircle2, ChevronDown, Check, TrendingUp } from 'lucide-react';
+import { Scale, Save, CheckCircle2, ChevronDown, Check, TrendingUp, Calendar } from 'lucide-react';
 import { getFarmCages, saveFarmCages, FarmCageData } from '@/lib/data/farm-data';
 import { Modal } from '@/components/ui/Modal';
+import { getCurrentUser } from '@/lib/data/auth-users';
+import { addActivityLog } from '@/lib/data/activity-log';
+import { markDataDirty, performAutoSync, isSyncNeeded, enqueuePendingSync } from '@/lib/sync/auto-sync';
 
 export default function BeratPage() {
   const router = useRouter();
@@ -12,6 +15,9 @@ export default function BeratPage() {
   const [selectedCage, setSelectedCage] = useState<FarmCageData | null>(null);
   const [showCageModal, setShowCageModal] = useState(false);
   const [showToast, setShowToast] = useState(false);
+
+  // Dynamic Date
+  const [tanggal, setTanggal] = useState(() => new Date().toISOString().split('T')[0]);
 
   const [sampelEkor, setSampelEkor] = useState(0);
   const [totalBeratKg, setTotalBeratKg] = useState('');
@@ -22,6 +28,12 @@ export default function BeratPage() {
     const list = getFarmCages();
     setCages(list);
     if (list.length > 0) setSelectedCage(list[0]);
+
+    return () => {
+      if (typeof window !== 'undefined' && navigator.onLine && isSyncNeeded()) {
+        performAutoSync();
+      }
+    };
   }, []);
 
   const totalKgNum = parseFloat(totalBeratKg) || 0;
@@ -46,6 +58,61 @@ export default function BeratPage() {
 
     setCages(updated);
     saveFarmCages(updated);
+
+    const user = getCurrentUser();
+    addActivityLog({
+      userName: user?.name || 'Pengawas Lapangan',
+      userRole: user?.role || 'PENGAWAS',
+      branchId: selectedCage.branchId || 'branch-1',
+      branchName: selectedCage.branchName || 'Cabang',
+      actionType: 'TIMBANG_BERAT',
+      title: `Timbang Bobot ${selectedCage.name} (${tanggal})`,
+      description: `Sampling ${sampelEkor} ekor. ABW: ${avgGram} gr/ekor (Standar: ${stdGram} gr, Deviasi: ${selisih} gr). Keseragaman: ${keseragaman || '-'}%.`,
+    });
+
+    const beratRow = {
+      tanggal: tanggal || new Date().toISOString().split('T')[0],
+      branchId: selectedCage.branchId || 'branch-1',
+      branchName: selectedCage.branchName || 'Cabang',
+      cageId: selectedCage.id,
+      cageName: selectedCage.name,
+      umurMgg: selectedCage.umurMgg || 31,
+      sampelEkor,
+      totalBeratKg: totalKgNum,
+      avgGram,
+      stdGram,
+      selisih,
+      keseragaman: parseFloat(keseragaman) || 0,
+      catatan: catatan || '-',
+      userName: user?.name || 'Pengawas Lapangan',
+    };
+
+    markDataDirty();
+
+    if (!navigator.onLine) {
+      enqueuePendingSync({
+        type: 'berat',
+        url: '/api/sheets/sync-berat',
+        payload: { row: beratRow },
+      });
+      console.log('[Offline] Data timbang bobot disimpan di antrean HP.');
+    } else {
+      fetch('/api/sheets/sync-berat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ row: beratRow }),
+      })
+        .then(() => performAutoSync())
+        .catch((err) => {
+          console.warn('Background sync berat gagal, diantrekan:', err);
+          enqueuePendingSync({
+            type: 'berat',
+            url: '/api/sheets/sync-berat',
+            payload: { row: beratRow },
+          });
+        });
+    }
+
     setShowToast(true);
 
     setTimeout(() => {
@@ -56,16 +123,29 @@ export default function BeratPage() {
 
   return (
     <div className="pt-16 sm:pt-20 pb-28 px-3.5 sm:px-4 space-y-3.5 sm:space-y-4">
-      <div>
-        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
-          Monitoring Pertumbuhan
-        </span>
-        <h1 className="font-jakarta font-bold text-xl text-slate-900">
-          Penimbangan Bobot (ABW)
-        </h1>
-        <p className="text-xs text-slate-500 mt-0.5 font-medium">
-          Sampling berat badan mingguan dan evaluasi keseragaman unggas
-        </p>
+      <div className="flex items-center justify-between gap-2">
+        <div>
+          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+            Monitoring Pertumbuhan
+          </span>
+          <h1 className="font-jakarta font-bold text-lg sm:text-xl text-slate-900">
+            Penimbangan Bobot (ABW)
+          </h1>
+          <p className="text-xs text-slate-500 mt-0.5 font-medium">
+            Sampling berat badan mingguan dan evaluasi keseragaman unggas
+          </p>
+        </div>
+
+        {/* Dynamic Date Picker Pill */}
+        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-sky-50 text-[#0369a1] text-xs font-semibold border border-sky-200 shadow-2xs shrink-0">
+          <Calendar className="w-3.5 h-3.5 text-[#0284c7] shrink-0" />
+          <input
+            type="date"
+            value={tanggal}
+            onChange={(e) => setTanggal(e.target.value)}
+            className="bg-transparent text-xs font-bold text-[#0369a1] focus:outline-none cursor-pointer"
+          />
+        </div>
       </div>
 
       {/* Cage Selector */}
